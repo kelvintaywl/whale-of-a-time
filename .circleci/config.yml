@@ -31,7 +31,7 @@ jobs:
       - run:
           name: Run built-image as container (background)
           command: |
-            docker run -d --name fancy-nginx -p "8080:80" "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}"
+            docker container run -d --name fancy-nginx -p "8080:80" "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}"
       - run:
           name: Check container is up
           command: |
@@ -40,7 +40,14 @@ jobs:
             # Hence, we run dockerize in the same network in order to poll it.
             # NOTE that we are polling port 80, not 8080 since inside the network, our fancy-nginx is exposed at port 80 instead.
             # See https://circleci.com/docs/2.0/building-docker-images/#accessing-services
-            docker run --network container:fancy-nginx docker.io/jwilder/dockerize -wait http://localhost:80 -wait-retry-interval 2s -timeout 20s
+            docker container run --network container:fancy-nginx docker.io/jwilder/dockerize -wait http://localhost:80 -wait-retry-interval 2s -timeout 20s
+      - run:
+          name: Publish image
+          command: |
+            # login credentials should be provided via context or project environment variables.
+            echo $DOCKER_PASSWORD | docker login $DOCKER_REGISTRY --username $DOCKER_LOGIN --password-stdin
+
+            docker image push --all-tags "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>"
 
 workflows:
   # Builds a custom image,
@@ -48,4 +55,5 @@ workflows:
   # and publish to Docker Hub!
   build_test_publish:
     jobs:
-      - build_custom_nginx
+      - build_custom_nginx:
+          context: docker
