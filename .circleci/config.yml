@@ -31,13 +31,15 @@ jobs:
       - run:
           name: Run built-image as container (background)
           command: |
-            docker container run -p "8888:80" "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}"
-          background: true
+            docker run -d --name fancy-nginx -p "8080:80" "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}"
       - run:
           name: Check container is up
           command: |
-            dockerize -wait http://localhost:8888 -timeout 10s
-            curl -s http://localhost:8888
+            # Because we are using remote_docker, all docker-related activities run inside this remote container.
+            # In other words, the nginx server is not directly accessible to our primary container here.
+            # Hence, we run dockerize in the same network in order to poll it.
+            # See https://circleci.com/docs/2.0/building-docker-images/#accessing-services
+            docker run --network container:fancy-nginx docker.io/jwilder/dockerize -wait http://localhost:80 -wait-retry-interval 2s -timeout 20s
 
 workflows:
   # Builds a custom image,
