@@ -38,6 +38,7 @@ jobs:
             # Because we are using remote_docker, all docker-related activities run inside this remote container.
             # In other words, the nginx server is not directly accessible to our primary container here.
             # Hence, we run dockerize in the same network in order to poll it.
+            # NOTE that we are polling port 80, not 8080 since inside the network, our fancy-nginx is exposed at port 80 instead.
             # See https://circleci.com/docs/2.0/building-docker-images/#accessing-services
             docker run --network container:fancy-nginx docker.io/jwilder/dockerize -wait http://localhost:80 -wait-retry-interval 2s -timeout 20s
 
