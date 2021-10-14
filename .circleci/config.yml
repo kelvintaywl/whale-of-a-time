@@ -78,11 +78,16 @@ jobs:
             done
             exit 1
       - run:
-          name: Run tests with Newman
+          name: Run integration tests with Newman
           command: |
             docker ps
 
             # Newman is a test runner for Postman collections
+            # Here, we attach our newman container to the same network as our app server
+            # so it can look up the app server at localhost:3000.
+            # Alternatively, we could have installed Newman on this local machine
+            # and it would be able to access the exposed app server at localhost:3000 too.
+            # I wanted to demonstrate how containers can talk to one another if they are in the same network.
             docker container run --network container:whale-of-a-time_server_1 \
             -v $(pwd)/postman_collections:/etc/newman \
             -t postman/newman \
