@@ -42,6 +42,17 @@ jobs:
             # See https://circleci.com/docs/2.0/building-docker-images/#accessing-services
             docker container run --network container:fancy-nginx docker.io/jwilder/dockerize -wait http://localhost:80 -wait-retry-interval 2s -timeout 20s
       - run:
+          name: Printscreen webpage served by container
+          command: |
+            # https://hub.docker.com/r/lifenz/docker-screenshot
+            # Save a screenshot as screenshot.png at 1280px after pausing 2000ms, with zoom factor: 1
+            docker container run --network container:fancy-nginx --name screenshot lifenz/docker-screenshot http://localhost:80 screenshot.png 1280px 2000 1
+            docker cp screenshot:/srv/screenshot.png $PWD
+
+            ls screenshot.png
+      - store_artifacts:
+           path: screenshot.png
+      - run:
           name: Publish image
           command: |
             # login credentials should be provided via context or project environment variables.
