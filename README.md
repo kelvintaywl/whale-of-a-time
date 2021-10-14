@@ -13,7 +13,8 @@ Please see the various workflows declared in `.circleci/config.yml` for examples
 
 ## Notes
 
-A lot of these examples can really be simplified by using the Docker orb offered by CircleCI!
+Some of these examples can really be simplified by using many of the orbs offered by CircleCI!
+In particular, we could simplify our lives with the powerful [Docker orb](https://circleci.com/developer/orbs/orb/circleci/docker).
 
 However, in these examples, I would like to keep it as 'low-tech' as possible.
 
@@ -23,6 +24,10 @@ However, in these examples, I would like to keep it as 'low-tech' as possible.
 ### `build_test_publish`
 
 This workflow builds a custom Nginx image, tests that our image can be spin up before publishing to a image repository (Docker Hub in this case).
+
+The published image is hosted in Docker Hub.
+
+[![dockeri.co](https://dockeri.co/image/kelvintaywl/fancy-nginx)](https://hub.docker.com/r/kelvintaywl/fancy-nginx)
 
 Features:
  - `docker image build`
