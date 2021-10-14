@@ -1,0 +1,49 @@
+{
+	"info": {
+		"_postman_id": "30eec071-a8ec-4b5f-964c-0ec05a12d17e",
+		"name": "Postgrest",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "List Characters",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Should have Moby Dick, Fudgie the Whale & Lyngbakr\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    console.log(jsonData);",
+							"    pm.expect(jsonData.length).to.eql(3);",
+							"",
+							"    var names = jsonData.map((c) => c.name);",
+							"    ",
+							"    pm.expect(names).to.include(\"Moby Dick\");",
+							"    pm.expect(names).to.include(\"Fudgie the Whale\");",
+							"    pm.expect(names).to.include(\"Lyngbakr\");",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:3000/characters",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"characters"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
