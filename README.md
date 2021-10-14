@@ -25,6 +25,8 @@ However, in these examples, I would like to keep it as 'low-tech' as possible.
 
 This workflow builds a custom Nginx image, tests that our image can be spin up before publishing to a image repository (Docker Hub in this case).
 
+**Bonus**: We also take a screenshot of the custom Nginx server's web page [here](https://24-416657252-gh.circle-artifacts.com/0/screenshot.png)
+
 The published image is hosted in Docker Hub.
 
 [![dockeri.co](https://dockeri.co/image/kelvintaywl/fancy-nginx)](https://hub.docker.com/r/kelvintaywl/fancy-nginx)
@@ -34,10 +36,11 @@ Features:
  - `docker container run`
  - [dockerize](https://github.com/jwilder/dockerize) tool
  - `docker image push`
+ - `docker cp`
 
  ![Build for custom nginx](assets/build_custom_nginx.png)
 
-> [See sample build](https://app.circleci.com/pipelines/github/kelvintaywl/whale-of-a-time/11/workflows/4fa62a70-e12b-4e0a-8c4f-7ccccb110909/jobs/12)
+> [See sample build](https://app.circleci.com/pipelines/github/kelvintaywl/whale-of-a-time/17/workflows/0a18786c-d6d0-4347-a8c7-bbb7d0c0c2c0/jobs/24)
 
 
 ### `compose_tests`
