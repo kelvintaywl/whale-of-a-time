@@ -101,10 +101,10 @@ jobs:
             -v $(pwd)/postman_collections:/etc/newman \
             -t postman/newman \
             run /etc/newman/Postgrest.json
-      - run:
-          name: Ping registry
-          command: |
-            docker container run --network container:registry appropriate/curl --retry 10 --retry-connrefused http://localhost:8081
+      # - run:
+      #     name: Ping registry
+      #     command: |
+      #       docker container run --network container:registry appropriate/curl --retry 10 --retry-connrefused http://localhost:8081
       - run:
           name: Test connecting to registry from server
           command: |
