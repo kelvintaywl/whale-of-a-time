@@ -24,8 +24,6 @@ jobs:
           dockerfile: ./Dockerfile
 
 workflows:
-  # Builds a custom image with DLC
-  # and publishes to AWS ECR!
   build_publish_dlc_aws_ecr:
     jobs:
       - aws-ecr/build-and-push-image:
