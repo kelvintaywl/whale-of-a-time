@@ -28,8 +28,6 @@ workflows:
   # and publishes to AWS ECR!
   build_publish_dlc_aws_ecr:
     jobs:
-      # - build_with_dlc_aws_ecr:
-      #     context: docker
       - aws-ecr/build-and-push-image:
           repo: kelvintaywl/fancy-nginx-cached
           dockerfile: ./Dockerfile
