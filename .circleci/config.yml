@@ -20,7 +20,7 @@ jobs:
           dockerfile: ./Dockerfile
           tag: stable,latest
       - aws-ecr/build-and-push-image:
-          repo: kelvintay/fancy-nginx
+          repo: kelvin/fancy-nginx
           dockerfile: ./Dockerfile
 
 workflows:
