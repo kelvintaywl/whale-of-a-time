@@ -7,14 +7,9 @@ jobs:
       - image: scylladb/scylla:latest
     steps:
       - checkout
-      - setup_remote_docker
-      - run: 
-          command: |
-            docker stats --all --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}"
-          background: true
-      - run: 
-          command: |
-            sleep 2m
+      - run:
+          command: cat /sys/fs/cgroup/memory/memory.max_usage_in_bytes
+          when: always
 
 workflows:
   sidecar_monitoring:
