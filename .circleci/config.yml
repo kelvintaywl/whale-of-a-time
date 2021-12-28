@@ -10,7 +10,7 @@ jobs:
     environment:
       <<: *environment
     docker:
-      - image: cimg/base:stable
+      - image: cimg/base:2021.12
     parameters:
       image_name:
         type: string
@@ -22,7 +22,9 @@ jobs:
       - checkout
       - setup_remote_docker:
           # https://circleci.com/docs/2.0/building-docker-images/#docker-version
-          version: 20.10.7
+          # version: 20.10.7
+          # use default
+          docker_layer_caching: true
       - run:
           name: Build image
           command: |
