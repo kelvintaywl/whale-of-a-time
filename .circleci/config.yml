@@ -62,7 +62,7 @@ jobs:
     machine:
       # Try to use the latest Machine image if possible
       # See https://circleci.com/docs/2.0/configuration-reference/#available-machine-images
-      image: ubuntu-2004:202107-02
+      image: ubuntu-1604:201903-01
     steps:
       - checkout
       - run:
