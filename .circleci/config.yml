@@ -63,6 +63,7 @@ jobs:
       # Try to use the latest Machine image if possible
       # See https://circleci.com/docs/2.0/configuration-reference/#available-machine-images
       image: ubuntu-2004:202107-02
+      docker_layer_caching: true
     steps:
       - checkout
       - run:
@@ -106,10 +107,10 @@ workflows:
   # Builds a custom image,
   # spins it up for tests,
   # and publishes to Docker Hub!
-  build_test_publish:
-    jobs:
-      - build_custom_nginx:
-          context: docker
+  # build_test_publish:
+  #   jobs:
+  #     - build_custom_nginx:
+  #         context: docker
   # Runs services as-per a docker-compose file,
   # and runs integration tests against spun services.
   compose_tests:
