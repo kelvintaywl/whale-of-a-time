@@ -77,18 +77,7 @@ jobs:
           # Showcase another way to check on our server, besides dockerize
           name: Wait on application to be ready
           command: |
-            N=8
-            while [ $N -gt 0 ]
-            do
-              if $(nc -z remote-docker 3000); then
-                echo "Connected!"
-                exit 0
-              fi
-              echo "Not connected; retrying"
-              N=$(( $N - 1 ))
-              sleep 1
-            done
-            exit 1
+            sleep 10
       - run:
           name: Run integration tests with Newman
           command: |
