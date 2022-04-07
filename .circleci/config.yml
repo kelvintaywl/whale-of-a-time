@@ -59,13 +59,15 @@ jobs:
             docker image push --all-tags "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>"
 
   docker_compose_tests:
-    machine:
-      # Try to use the latest Machine image if possible
-      # See https://circleci.com/docs/2.0/configuration-reference/#available-machine-images
-      image: ubuntu-2004:202107-02
-      docker_layer_caching: true
+    # switch to Docker + Remote Docker engine
+    docker:
+      - image: cimg/base:stable
     steps:
       - checkout
+      - setup_remote_docker:
+          # https://circleci.com/docs/2.0/building-docker-images/#docker-version
+          version: 20.10.7
+          docker_layer_caching: true
       - run:
           name: Spin up services with Docker Compose
           command: |
@@ -78,7 +80,7 @@ jobs:
             N=8
             while [ $N -gt 0 ]
             do
-              if $(nc -z localhost 3000); then
+              if $(nc -z remote-docker 3000); then
                 echo "Connected!"
                 exit 0
               fi
