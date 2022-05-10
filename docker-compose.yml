@@ -6,7 +6,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      PGRST_DB_URI: postgres://Free:Willy@db:5432/wiki
+      PGRST_DB_URI: postgres://Free:Willy@postgres:5432/wiki
       PGRST_DB_SCHEMA: public
       PGRST_DB_ANON_ROLE: Free
       PGRST_OPENAPI_SERVER_PROXY_URI: "http://127.0.0.1:3000"
