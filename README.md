@@ -1,7 +1,7 @@
 <div align="center">
   <img src="https://i.giphy.com/media/NygxobfPsIHNS/giphy.webp">
   <br/>
-  <h1>Whale of a Time!</h1>
+  <h1>Whale of a Time</h1>
 </div>
 
 This repository explores all the typical Docker-related operations within CI builds.
