@@ -71,6 +71,20 @@ jobs:
             # set prefix to "whale-of-a-time" for names of our services
             docker-compose -p whale-of-a-time up -d
       - run:
+          name: Profile Docker containers' logs every 5s (background)
+          command: |
+            while true; do
+              sleep 5
+              printf "\n\n$(date)\n"
+              for cntr_name in $(docker ps --format {{.Names}})
+              do
+                echo "=============================== Logs for ${cntr_name}"
+                docker logs $cntr_name
+                echo "==============================="
+              done
+            done
+          background: true
+      - run:
           # Showcase another way to check on our server, besides dockerize
           name: Wait on application to be ready
           command: |
