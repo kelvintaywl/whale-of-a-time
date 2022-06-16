@@ -4,6 +4,7 @@ defaults:
   environment: &environment
     DOCKER_REGISTRY: docker.io
     DOCKER_USER: kelvintaywl
+    DOCKER_BUILDKIT: 1
 
 jobs:
   build_custom:
