@@ -37,6 +37,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
+            # just an example of installing extra dependencies
             sudo apt-get update -y
             sudo apt-get install -y mysql-client
       - run:
