@@ -55,25 +55,12 @@ jobs:
             done
             exit 1
       - run:
-          name: Wait on MySQL to be ready
+          name: Run SQL command
           command: |
             # see env vars on this MySQL container
             docker container inspect mysql | jq ".[0].Config.Env"
 
-            N=8
-            while [ $N -gt 0 ]
-            do
-              # not great that we disable SSL mode, but this is just an example
-              # See https://stackoverflow.com/a/65916427
-              if $(mysql --ssl-mode=DISABLED -h 127.0.0.1 -P 3306 -u root -D circle_test -e ";"); then
-                echo "Connected to MySQL!"
-                exit 0
-              fi
-              echo "Not connected; retrying"
-              N=$(( $N - 1 ))
-              sleep 1
-            done
-            exit 1
+            mysql --ssl-mode=DISABLED -h 127.0.0.1 -P 3306 -u root -D circle_test -e "SELECT 1;"
 workflows:
   test:
     jobs:
