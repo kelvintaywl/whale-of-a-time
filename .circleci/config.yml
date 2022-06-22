@@ -19,9 +19,11 @@ jobs:
             
             which java && java --version
             
-            which redis-cli
+            # redis-cli not included
+            which redis-cli || true
 
-            which mysql
+            # mysql CLI not included
+            which mysql || true
       - run:
           name: Run Redis
           command: |
