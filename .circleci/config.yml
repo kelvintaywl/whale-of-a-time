@@ -65,7 +65,7 @@ jobs:
             do
               # not great that we disable SSL mode, but this is just an example
               # See https://stackoverflow.com/a/65916427
-              if $(mysql --ssl-mode=DISABLED -h 127.0.0.1 -P 3306 -u root -D circle_test -e "SELECT 1;"); then
+              if $(mysql --ssl-mode=DISABLED -h 127.0.0.1 -P 3306 -u root -D circle_test -e ";"); then
                 echo "Connected to MySQL!"
                 exit 0
               fi
