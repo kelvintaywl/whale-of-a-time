@@ -60,7 +60,7 @@ jobs:
             # see env vars on this MySQL container
             docker container inspect mysql | jq ".[0].Config.Env"
 
-            mysql --ssl-mode=DISABLED -h 127.0.0.1 -P 3306 -u root -D circle_test -e "SELECT 1;"
+            mysql --ssl-mode=DISABLED -h 0.0.0.0 -P 3306 -u root -D circle_test -e "SELECT 1;"
 workflows:
   test:
     jobs:
