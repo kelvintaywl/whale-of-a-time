@@ -40,7 +40,7 @@ jobs:
             sudo apt-get update -y
             sudo apt-get install -y mysql-client
       - run:
-          name: Wait on Redis to be ready
+          name: Wait on Redis server to be ready
           command: |
             N=8
             while [ $N -gt 0 ]
@@ -55,12 +55,23 @@ jobs:
             done
             exit 1
       - run:
-          name: Run SQL command
+          name: Wait on MySQL server to be ready
           command: |
             # see env vars on this MySQL container
             docker container inspect mysql | jq ".[0].Config.Env"
 
-            mysql --ssl-mode=DISABLED -h 0.0.0.0 -P 3306 -u root -D circle_test -e "SELECT 1;"
+            N=8
+            while [ $N -gt 0 ]
+            do
+              if $(nc -z 127.0.0.1 3306); then
+                echo "MySQL is up!"
+                exit 0
+              fi
+              echo "MySQL is unavailable at port 3306; retrying"
+              N=$(( $N - 1 ))
+              sleep 1
+            done
+            exit 1
 workflows:
   test:
     jobs:
