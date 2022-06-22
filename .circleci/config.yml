@@ -38,18 +38,18 @@ jobs:
           name: Install dependencies
           command: |
             sudo apt-get update -y
-            sudo apt-get install -y redis mysql-client
+            sudo apt-get install -y mysql-client
       - run:
           name: Wait on Redis to be ready
           command: |
             N=8
             while [ $N -gt 0 ]
             do
-              if $(redis-cli -h 127.0.0.1 -p 6379 ping); then
-                echo "Connected to Redis!"
+              if $(nc -z 127.0.0.1 6379); then
+                echo "Redis is up!"
                 exit 0
               fi
-              echo "Not connected; retrying"
+              echo "Redis is unavailable at port 6379; retrying"
               N=$(( $N - 1 ))
               sleep 1
             done
