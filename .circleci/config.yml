@@ -17,7 +17,7 @@ jobs:
           command: |
             docker version
             
-            which java && java -V
+            which java && java --version
             
             which redis-cli
 
@@ -32,6 +32,11 @@ jobs:
           command: |
             docker run -p "3306:3306" --name mysql circleci/mysql:5.7.20
           background: true
+      - run:
+          name: Install dependencies
+          command: |
+            sudo apt-get update -y
+            sudo apt-get install -y redis mysql-client
       - run:
           name: Wait on Redis to be ready
           command: |
@@ -53,7 +58,7 @@ jobs:
             N=8
             while [ $N -gt 0 ]
             do
-              if $(redis-cli -h 127.0.0.1 -p 6379 ping); then
+              if $(mysql -h 127.0.0.1 -P 3306 -u root -e "SELECT 1;"); then
                 echo "Connected to MySQL!"
                 exit 0
               fi
