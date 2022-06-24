@@ -23,6 +23,10 @@ jobs:
           command: |
             sleep 10
             docker ps
+      - run:
+          name: Create admin account on Portainer
+          command: |
+            curl -v -X POST -d '{"username":"admin","password":"quickbrownfox"}' -H 'Content-Type: application/json' -H 'Origin: http://localhost:9000'  http://localhost:9000/api/auth
 
 workflows:
   sock:
