@@ -7,7 +7,9 @@ jobs:
       # See https://circleci.com/docs/2.0/configuration-reference#available-linux-machine-images
       image: ubuntu-2004:202201-02
     steps:
-      - run: docker info
+      - run: |
+          docker info
+          env | grep DOCKER_
       - run:
           name: Spin up Redis at 6379
           command: |
