@@ -32,7 +32,14 @@ jobs:
       - run:
           name: Run MySQL
           command: |
-            docker run -p "3306:3306" --name mysql circleci/mysql:5.7.20
+            # See https://docs.docker.com/engine/reference/commandline/run/#set-environment-variables--e---env---env-file
+            docker run -p "3306:3306" --env MYSQL_ROOT_PASSWORD --env MYSQL_DATABASE --env MYSQL_USER --env MYSQL_PASSWORD --name mysql circleci/mysql:5.7.20
+          environment:
+            # see https://circleci.com/docs/2.0/postgres-config#example-mysql-project
+            MYSQL_ROOT_PASSWORD: rootpw
+            MYSQL_DATABASE: test_db
+            MYSQL_USER: user
+            MYSQL_PASSWORD: passw0rd
           background: true
       - run:
           name: Install dependencies
@@ -73,6 +80,12 @@ jobs:
               sleep 1
             done
             exit 1
+      - run:
+          name: Run script against MySQL
+          command: |
+            echo "CREATE TABLE IF NOT EXISTS tasks (task_id INT AUTO_INCREMENT PRIMARY KEY, title VARCHAR(255) NOT NULL); DESCRIBE tasks;" > setup.sql
+            
+            mysql -h 127.0.0.1 -u root -prootpw test_db < setup.sql
 workflows:
   test:
     jobs:
