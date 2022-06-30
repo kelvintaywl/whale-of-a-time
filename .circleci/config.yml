@@ -12,6 +12,7 @@ jobs:
       # See https://circleci.com/docs/2.0/configuration-reference/#available-machine-images
       image: ubuntu-2204:2022.04.1
     steps:
+      - checkout
       - run:
           name: check dependencies
           command: |
