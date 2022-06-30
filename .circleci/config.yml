@@ -61,7 +61,7 @@ jobs:
           name: Wait on MySQL server to be ready
           command: |
             # see env vars on this MySQL container
-            docker container inspect mysql | jq ".[0].Config.Env"
+            docker container inspect mysql | jq "."
 
             dockerize -wait tcp://127.0.0.1:3306 -timeout 30s
       - run:
