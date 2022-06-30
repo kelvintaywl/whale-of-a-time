@@ -61,15 +61,18 @@ jobs:
           name: Wait on MySQL server to be ready
           command: |
             # see env vars on this MySQL container
-            docker container inspect mysql | jq "."
+            docker container inspect mysql | jq ".[0].Config.Env"
 
             dockerize -wait tcp://127.0.0.1:3306 -timeout 30s
       - run:
           name: Run script against MySQL
           command: |
+            sleep 20
+
             # disabling SSL mode, see https://stackoverflow.com/a/65916427
             # not ideal, but is just for this command
             echo "DESCRIBE tasks;" > test.sql
+
             mysql --ssl-mode=DISABLED -h 127.0.0.1 -u root -prootpw test_db < test.sql
 workflows:
   test:
