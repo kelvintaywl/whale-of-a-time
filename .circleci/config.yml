@@ -87,7 +87,7 @@ jobs:
             
             # disabling SSL mode, see https://stackoverflow.com/a/65916427
             # not ideal, but is just for this command
-            mysql --ssl-mode=DISABLED -h 127.0.0.1 -u root -prootpw test_db < setup.sql
+            mysql --ssl-mode=DISABLED -h 127.0.0.1 -u root -prootpw test_db < setup.sql || mysql --ssl-mode=DISABLED -h 0.0.0.0 -u root -prootpw test_db < setup.sql
 workflows:
   test:
     jobs:
