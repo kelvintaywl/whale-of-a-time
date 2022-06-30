@@ -47,39 +47,23 @@ jobs:
             # just an example of installing extra dependencies
             sudo apt-get update -y
             sudo apt-get install -y mysql-client
+
+            sudo wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
+            sudo tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
+            sudo rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
+          environment:
+            DOCKERIZE_VERSION: 'v0.6.1'
       - run:
           name: Wait on Redis server to be ready
           command: |
-            N=8
-            while [ $N -gt 0 ]
-            do
-              if $(nc -z 127.0.0.1 6379); then
-                echo "Redis is up!"
-                exit 0
-              fi
-              echo "Redis is unavailable at port 6379; retrying"
-              N=$(( $N - 1 ))
-              sleep 1
-            done
-            exit 1
+            dockerize -wait tcp://127.0.0.1:6379 -timeout 30s
       - run:
           name: Wait on MySQL server to be ready
           command: |
             # see env vars on this MySQL container
             docker container inspect mysql | jq ".[0].Config.Env"
 
-            N=8
-            while [ $N -gt 0 ]
-            do
-              if $(nc -z 127.0.0.1 3306); then
-                echo "MySQL is up!"
-                exit 0
-              fi
-              echo "MySQL is unavailable at port 3306; retrying"
-              N=$(( $N - 1 ))
-              sleep 1
-            done
-            exit 1
+            dockerize -wait tcp://127.0.0.1:3306 -timeout 30s
       - run:
           name: Run script against MySQL
           command: |
@@ -87,7 +71,7 @@ jobs:
             
             # disabling SSL mode, see https://stackoverflow.com/a/65916427
             # not ideal, but is just for this command
-            mysql --ssl-mode=DISABLED -h 127.0.0.1 -u root -prootpw test_db < setup.sql || mysql --ssl-mode=DISABLED -h 0.0.0.0 -u root -prootpw test_db < setup.sql
+            mysql --ssl-mode=DISABLED -h 127.0.0.1 -u root -prootpw test_db < setup.sql
 workflows:
   test:
     jobs:
