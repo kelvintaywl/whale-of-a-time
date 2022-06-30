@@ -33,7 +33,7 @@ jobs:
           name: Run MySQL
           command: |
             # See https://docs.docker.com/engine/reference/commandline/run/#set-environment-variables--e---env---env-file
-            docker run -p "3306:3306" --env MYSQL_ROOT_PASSWORD --env MYSQL_DATABASE --env MYSQL_USER --env MYSQL_PASSWORD --name mysql circleci/mysql:5.7.20
+            docker run -p "3306:3306" -v "$(pwd)/mysql/initdb:/docker-entrypoint-initdb.d" --env MYSQL_ROOT_PASSWORD --env MYSQL_DATABASE --env MYSQL_USER --env MYSQL_PASSWORD --name mysql circleci/mysql:5.7.20
           environment:
             # see https://circleci.com/docs/2.0/postgres-config#example-mysql-project
             MYSQL_ROOT_PASSWORD: rootpw
@@ -67,11 +67,10 @@ jobs:
       - run:
           name: Run script against MySQL
           command: |
-            echo "CREATE TABLE IF NOT EXISTS tasks (task_id INT AUTO_INCREMENT PRIMARY KEY, title VARCHAR(255) NOT NULL); DESCRIBE tasks;" > setup.sql
-            
             # disabling SSL mode, see https://stackoverflow.com/a/65916427
             # not ideal, but is just for this command
-            mysql --ssl-mode=DISABLED -h 127.0.0.1 -u root -prootpw test_db < setup.sql
+            echo "DESCRIBE tasks;" > test.sql
+            mysql --ssl-mode=DISABLED -h 127.0.0.1 -u root -prootpw test_db < test.sql
 workflows:
   test:
     jobs:
