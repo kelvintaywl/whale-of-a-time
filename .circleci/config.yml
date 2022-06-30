@@ -85,7 +85,9 @@ jobs:
           command: |
             echo "CREATE TABLE IF NOT EXISTS tasks (task_id INT AUTO_INCREMENT PRIMARY KEY, title VARCHAR(255) NOT NULL); DESCRIBE tasks;" > setup.sql
             
-            mysql -h 127.0.0.1 -u root -prootpw test_db < setup.sql
+            # disabling SSL mode, see https://stackoverflow.com/a/65916427
+            # not ideal, but is just for this command
+            mysql --ssl-mode=DISABLED -h 127.0.0.1 -u root -prootpw test_db < setup.sql
 workflows:
   test:
     jobs:
