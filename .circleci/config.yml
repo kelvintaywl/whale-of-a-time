@@ -51,6 +51,9 @@ jobs:
     steps:
       - attach_workspace:
           at: .
+      - setup_remote_docker:
+          # https://circleci.com/docs/2.0/building-docker-images/#docker-version
+          version: 20.10.7
       - run:
           name: Load image
           command: |
