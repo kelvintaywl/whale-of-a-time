@@ -27,6 +27,37 @@ jobs:
           name: Build image
           command: |
             docker image build --tag "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}" .
+      - run:
+          name: Save image as tar
+          command: |
+            mkdir -p images
+            docker image save -o "images/<< parameters.image_name >>:${CIRCLE_SHA1}" "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}"
+            
+      - persist_to_workspace:
+          paths:
+            - images
+   test_and_publish_custom_nginx:
+    environment:
+      <<: *environment
+    docker:
+      - image: cimg/base:stable
+    parameters:
+      image_name:
+        type: string
+        default: 'fancy-nginx'
+      image_tag:
+        type: string
+        default: 'latest'
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Load image
+          command: |
+            docker image load < "images/<< parameters.image_name >>:${CIRCLE_SHA1}"
+      - run:
+          name: Include additional image tags
+          commmand: |
             docker image tag "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}" "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:<< parameters.image_tag >>"
       - run:
           name: Run built-image as container (background)
@@ -108,7 +139,10 @@ workflows:
   # and publishes to Docker Hub!
   build_test_publish:
     jobs:
-      - build_custom_nginx:
+      - build_custom_nginx
+      - test_and_publish_custom_nginx:
+          requires:
+            - build_custom_nginx
           context: docker
   # Runs services as-per a docker-compose file,
   # and runs integration tests against spun services.
