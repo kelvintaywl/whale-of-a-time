@@ -32,11 +32,11 @@ jobs:
           command: |
             mkdir -p images
             docker image save -o "images/<< parameters.image_name >>:${CIRCLE_SHA1}" "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}"
-            
       - persist_to_workspace:
+          root: .
           paths:
             - images
-   test_and_publish_custom_nginx:
+  test_and_publish_custom_nginx:
     environment:
       <<: *environment
     docker:
@@ -57,7 +57,7 @@ jobs:
             docker image load < "images/<< parameters.image_name >>:${CIRCLE_SHA1}"
       - run:
           name: Include additional image tags
-          commmand: |
+          command: |
             docker image tag "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}" "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:<< parameters.image_tag >>"
       - run:
           name: Run built-image as container (background)
