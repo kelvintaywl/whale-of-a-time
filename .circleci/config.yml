@@ -113,6 +113,6 @@ workflows:
           context: docker
   # Runs services as-per a docker-compose file,
   # and runs integration tests against spun services.
-  compose_tests:
-    jobs:
-      - docker_compose_tests
+#   compose_tests:
+#     jobs:
+#       - docker_compose_tests
