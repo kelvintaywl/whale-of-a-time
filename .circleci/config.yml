@@ -38,28 +38,7 @@ jobs:
       - run:
           name: Check container is up
           command: |
-            # Because we are using remote_docker, all docker-related activities run inside this remote container.
-            # In other words, the nginx server is not directly accessible to our primary container here.
-            # Hence, we run dockerize in the same network in order to poll it.
-            # NOTE that we are polling port 80, not 8080 since inside the network, our fancy-nginx is exposed at port 80 instead.
-            # See https://circleci.com/docs/2.0/building-docker-images/#accessing-services
-            docker container run --network container:fancy-nginx docker.io/jwilder/dockerize -wait http://localhost:80 -wait-retry-interval 2s -timeout 20s
-      - run:
-          name: Printscreen webpage served by container
-          command: |
-            # https://hub.docker.com/r/lifenz/docker-screenshot
-            # Save a screenshot as screenshot.png at 1280px after pausing 2000ms, with zoom factor: 1
-            docker container run --network container:fancy-nginx --name screenshot lifenz/docker-screenshot http://localhost:80 screenshot.png 1280px 2000 1
-            docker cp screenshot:/srv/screenshot.png $PWD
-      - store_artifacts:
-           path: screenshot.png
-      - run:
-          name: Publish image
-          command: |
-            # login credentials should be provided via context or project environment variables.
-            echo $DOCKER_PASSWORD | docker login $DOCKER_REGISTRY --username $DOCKER_LOGIN --password-stdin
-
-            docker image push --all-tags "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>"
+            docker ps
 
   docker_compose_tests:
     machine:
