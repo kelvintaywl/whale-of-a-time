@@ -10,14 +10,11 @@ defaults:
 
 jobs:
   build_custom_nginx_arm:
-  build-uab-aws2-arm:
     machine:
       image: ubuntu-2004:202201-02
     resource_class: arm.large
     environment:
       <<: *environment
-    docker:
-      - image: cimg/base:stable
     parameters:
       image_name:
         type: string
