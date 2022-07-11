@@ -4,9 +4,16 @@ defaults:
   environment: &environment
     DOCKER_REGISTRY: docker.io
     DOCKER_USER: kelvintaywl
+    DOCKER_BUILDKIT: 1
+    COMPOSE_HTTP_TIMEOUT: 300
+    COMPOSE_DOCKER_CLI_BUILD: 1
 
 jobs:
-  build_custom_nginx:
+  build_custom_nginx_arm:
+  build-uab-aws2-arm:
+    machine:
+      image: ubuntu-2004:202201-02
+    resource_class: arm.large
     environment:
       <<: *environment
     docker:
@@ -20,9 +27,8 @@ jobs:
         default: 'latest'
     steps:
       - checkout
-      - setup_remote_docker:
-          # https://circleci.com/docs/2.0/building-docker-images/#docker-version
-          version: 20.10.7
+      - run: |
+          docker info
       - run:
           name: Build image
           command: |
@@ -108,10 +114,10 @@ workflows:
   # and publishes to Docker Hub!
   build_test_publish:
     jobs:
-      - build_custom_nginx:
+      - build_custom_nginx_arm:
           context: docker
-  # Runs services as-per a docker-compose file,
-  # and runs integration tests against spun services.
-  compose_tests:
-    jobs:
-      - docker_compose_tests
+#   # Runs services as-per a docker-compose file,
+#   # and runs integration tests against spun services.
+#   compose_tests:
+#     jobs:
+#       - docker_compose_tests
