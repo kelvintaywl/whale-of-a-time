@@ -23,11 +23,11 @@ jobs:
       - run:
           name: Build image via Kaniko
           command: |
+            ./config.sh
+            ls -laH config.json
+
             docker run \
-                -e DOCKER_REGISTRY \
-                -e DOCKER_USER \
-                -e DOCKER_LOGIN \
-                -e DOCKER_PASSWORD \
+                -v /home/circleci/project/config.json:/kaniko/.docker/config.json:ro \
                 -v /home/circleci/project:/workspace \
                 gcr.io/kaniko-project/executor:latest \
                 --dockerfile /workspace/Dockerfile \
