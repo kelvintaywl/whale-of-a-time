@@ -36,7 +36,36 @@ jobs:
                 --dockerfile /workspace/Dockerfile \
                 --destination "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:kaniko-machine-${CIRCLE_SHA1}" \
                 --context dir:///workspace/
-
+  build_custom_nginx_docker:
+    environment:
+      <<: *environment
+    docker:
+      # we use the debug tag since it comes with sh
+      - image: gcr.io/kaniko-project/executor:debug
+        entrypoint: ""
+    parameters:
+      image_name:
+        type: string
+        default: 'fancy-nginx'
+      image_tag:
+        type: string
+        default: 'latest'
+    steps:
+      - checkout
+      - run:
+          name: add Docker Hub credentials
+          command: |
+            mkdir -p /kaniko/.docker
+            ./config.sh
+            mv config.json /kaniko/.docker
+      - run:
+          name:
+          command: |
+            # See https://circleci.com/docs/env-vars#built-in-environment-variables
+            /kaniko/executor \
+                --context "$(pwd)" \
+                --dockerfile "$(pwd)/Dockerfile" \
+                --destination "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:kaniko-docker-${CIRCLE_SHA1}"
 workflows:
   # Builds a custom image,
   # spins it up for tests,
@@ -45,4 +74,5 @@ workflows:
     jobs:
       - build_custom_nginx_machine:
           context: docker
-
+      - build_custom_nginx_docker:
+          context: docker
