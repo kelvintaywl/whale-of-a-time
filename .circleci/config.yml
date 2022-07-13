@@ -26,13 +26,14 @@ jobs:
             ./config.sh
             ls -laH config.json
 
+            # Kaniko cache is a GCP Cloud Build feature (uses GCR).
+            # See https://cloud.google.com/build/docs/optimize-builds/kaniko-cache
+            # Hence, this is not applicable when pushing to Docker Hub
             docker run \
                 -v /home/circleci/project/config.json:/kaniko/.docker/config.json:ro \
                 -v /home/circleci/project:/workspace \
                 gcr.io/kaniko-project/executor:latest \
                 --dockerfile /workspace/Dockerfile \
-                --cache=true \
-                --cache-ttl=720h \
                 --destination "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}" \
                 --context dir:///workspace/
       - run:
