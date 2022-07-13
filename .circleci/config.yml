@@ -31,6 +31,8 @@ jobs:
                 -v /home/circleci/project:/workspace \
                 gcr.io/kaniko-project/executor:latest \
                 --dockerfile /workspace/Dockerfile \
+                --cache=true \
+                --cache-ttl=720h \
                 --destination "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}" \
                 --context dir:///workspace/
       - run:
