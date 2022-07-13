@@ -36,6 +36,7 @@ jobs:
                 --dockerfile /workspace/Dockerfile \
                 --destination "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:kaniko-machine-${CIRCLE_SHA1}" \
                 --context dir:///workspace/
+  # inspired by https://docs.gitlab.com/ee/ci/docker/using_kaniko.html
   build_custom_nginx_docker:
     environment:
       <<: *environment
