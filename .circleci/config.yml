@@ -3,24 +3,6 @@ version: 2.1
 orbs: 
   aws-ecr: circleci/aws-ecr@8.1.2
 
-jobs:
-  build_with_dlc_aws_ecr:
-    docker:
-      - image: cimg/base:stable
-    environment:
-      AWS_ECR_ACCOUNT_URL: 660990364978.dkr.ecr.us-east-1.amazonaws.com
-      AWS_REGION: us-east-1
-    steps:
-      - checkout
-      - setup_remote_docker:
-          version: 19.03.14
-          docker_layer_caching: true
-      - aws-ecr/build-and-push-image:
-          repo: public.ecr.aws/z1j6a2i1/kelvintaywl/fancy-nginx-cached
-          dockerfile: ./Dockerfile
-          tag: stable,latest
-
-
 workflows:
   build_publish_dlc_aws_ecr:
     jobs:
@@ -28,5 +10,3 @@ workflows:
           repo: kelvintaywl/fancy-nginx-cached
           executor:
             name: aws-ecr/default
-  #           use-docker-layer-caching: true
-
