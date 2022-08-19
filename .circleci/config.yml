@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs: 
-  aws-ecr: circleci/aws-ecr@7.0.0
+  aws-ecr: circleci/aws-ecr@8.1.2
 
 jobs:
   build_with_dlc_aws_ecr:
@@ -19,33 +19,14 @@ jobs:
           repo: public.ecr.aws/z1j6a2i1/kelvintaywl/fancy-nginx-cached
           dockerfile: ./Dockerfile
           tag: stable,latest
-  build-and-push-sprintboot-image:
-    docker:
-      - image: cimg/openjdk:8.0.312
-    steps:
-      - checkout
-      - run:
-          name: build dependencies
-          command: |
-            cd springboot
-            ./mvnw package && java -jar target/gs-spring-boot-docker-0.1.0.jar
-      - aws-ecr/build-and-push-image:
-          repo: kelvintaywl/springboot-example
-          path: springboot
-          dockerfile: Dockerfile
-          setup-remote-docker: true
-          remote-docker-layer-caching: true
-          tag: 0.0.1
+
 
 workflows:
-  # build_publish_dlc_aws_ecr:
-  #   jobs:
-  #     - aws-ecr/build-and-push-image:
-  #         repo: kelvintaywl/fancy-nginx-cached
-  #         dockerfile: ./Dockerfile
-  #         executor:
-  #           name: aws-ecr/default
-  #           use-docker-layer-caching: true
-  springboot_example:
+  build_publish_dlc_aws_ecr:
     jobs:
-      - build-and-push-sprintboot-image
+      - aws-ecr/build-and-push-image:
+          repo: kelvintaywl/fancy-nginx-cached
+          executor:
+            name: aws-ecr/default
+  #           use-docker-layer-caching: true
+
