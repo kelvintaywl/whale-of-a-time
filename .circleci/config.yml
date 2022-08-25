@@ -1,12 +1,197 @@
-version: 2.1
+# Orb 'circleci/aws-ecr@8.1.2' resolved to 'circleci/aws-ecr@8.1.2'
+version: 2
+jobs:
+  aws-ecr/build-and-push-image:
+    machine:
+      docker_layer_caching: true
+      image: ubuntu-2004:202107-02
+    resource_class: medium
+    steps:
+    - checkout
+    - run:
+        command: "if cat /etc/issue | grep \"Alpine\" >/dev/null 2>&1; then\n    if [ \"$ID\" = 0 ]; then export SUDO=\"\"; else export SUDO=\"sudo\"; fi\nelse \n    if [[ $EUID == 0 ]]; then export SUDO=\"\"; else export SUDO=\"sudo\"; fi\nfi\n\nInstall_AWS_CLI() {\n    echo \"Installing AWS CLI v2\"\n    cd /tmp || exit\n    # Platform check\n    if uname -a | grep \"Darwin\"; then\n        export SYS_ENV_PLATFORM=macos\n    elif uname -a | grep \"x86_64 GNU/Linux\"; then\n        export SYS_ENV_PLATFORM=linux_x86\n    elif uname -a | grep \"aarch64 GNU/Linux\"; then\n        export SYS_ENV_PLATFORM=linux_arm\n    elif uname -a | grep \"x86_64 Msys\"; then\n        export SYS_ENV_PLATFORM=windows\n    elif cat /etc/issue | grep \"Alpine\" >/dev/null 2>&1; then\n        export SYS_ENV_PLATFORM=linux_alpine\n    else\n        echo \"This platform appears to be unsupported.\"\n        uname -a\n        exit 1\n    fi\n\n    # Install per platform\n    case $SYS_ENV_PLATFORM in\n    linux_x86)\n        curl -sSL \"https://awscli.amazonaws.com/awscli-exe-linux-x86_64$1.zip\" -o \"awscliv2.zip\"\n        unzip -q -o awscliv2.zip\n        $SUDO ./aws/install -i \"${PARAM_AWS_CLI_INSTALL_DIR}\" -b \"${PARAM_AWS_CLI_BINARY_DIR}\"\n        rm -r awscliv2.zip ./aws\n        ;;\n    windows)\n        if [ ! \"$(command -v choco)\" ]; then\n            echo \"Chocolatey is required to uninstall AWS\"\n            exit 1\n        fi\n        choco install awscli --version=\"$1\"\n        echo \"$1\"\n        if echo \"$1\" | grep \"2.\"; then\n            echo 'export PATH=\"${PATH}:/c/Program Files/Amazon/AWSCLIV2\"' >>\"$BASH_ENV\"\n        else\n            echo 'export PATH=\"${PATH}:/c/Program Files/Amazon/AWSCLI/bin\"' >>\"$BASH_ENV\"\n        fi\n        ;;\n    macos)\n        curl -sSL \"https://awscli.amazonaws.com/AWSCLIV2$1.pkg\" -o \"AWSCLIV2.pkg\"\n        $SUDO installer -pkg AWSCLIV2.pkg -target /\n        rm AWSCLIV2.pkg\n        ;;\n    linux_arm)\n        curl -sSL \"https://awscli.amazonaws.com/awscli-exe-linux-aarch64$1.zip\" -o \"awscliv2.zip\"\n        unzip -q -o awscliv2.zip\n        $SUDO ./aws/install -i \"${PARAM_AWS_CLI_INSTALL_DIR}\" -b \"${PARAM_AWS_CLI_BINARY_DIR}\"\n        rm -r awscliv2.zip ./aws\n        ;;\n    linux_alpine)\n        apk --no-cache add \\\n            binutils \\\n            curl\n\n        curl -L https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub -o /etc/apk/keys/sgerrand.rsa.pub\n        curl -LO https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.34-r0/glibc-2.34-r0.apk\n        curl -LO https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.34-r0/glibc-bin-2.34-r0.apk\n        curl -LO https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.34-r0/glibc-i18n-2.34-r0.apk\n\n        apk add --no-cache \\\n            glibc-2.34-r0.apk \\\n            glibc-bin-2.34-r0.apk \\\n            glibc-i18n-2.34-r0.apk\n\n        /usr/glibc-compat/bin/localedef -i en_US -f UTF-8 en_US.UTF-8\n        curl -sSL \"https://awscli.amazonaws.com/awscli-exe-linux-x86_64$1.zip\" -o \"awscliv2.zip\"\n\n        echo \"https://awscli.amazonaws.com/awscli-exe-linux-x86_64$1.zip\"\n        unzip awscliv2.zip\n        aws/install\n        rm -r awscliv2.zip ./aws\n        ;;\n    *)\n        echo \"This orb does not currently support your platform. If you believe it should, please consider opening an issue on the GitHub repository:\"\n        echo \"https://github.com/CircleCI-Public/aws-cli-orb/issues/new\"\n        exit 1\n        ;;\n    esac\n    # Toggle AWS Pager\n    if [ \"$PARAM_AWS_CLI_DISABLE_PAGER\" = 1 ]; then\n        if [ -z \"${AWS_PAGER+x}\" ]; then\n            echo 'export AWS_PAGER=\"\"' >>\"$BASH_ENV\"\n            echo \"AWS_PAGER is being set to the empty string to disable all output paging for AWS CLI commands.\"\n            echo \"You can set the 'disable-aws-pager' parameter to 'false' to disable this behavior.\"\n        fi\n    fi\n}\n\nUninstall_AWS_CLI() {\n    if uname -a | grep \"x86_64 Msys\"; then\n        if [ ! \"$(command -v choco)\" ]; then\n            echo \"Chocolatey is required to uninstall AWS\"\n            exit 1\n        fi\n        choco uninstall awscli\n    else\n        AWS_CLI_PATH=$(command -v aws)\n        echo \"$AWS_CLI_PATH\"\n        if [ -n \"$AWS_CLI_PATH\" ]; then\n            EXISTING_AWS_VERSION=$(aws --version)\n            echo \"Uninstalling ${EXISTING_AWS_VERSION}\"\n            # shellcheck disable=SC2012\n            if [ -L \"$AWS_CLI_PATH\" ]; then\n                AWS_SYMLINK_PATH=$(ls -l \"$AWS_CLI_PATH\" | sed -e 's/.* -> //')\n            fi\n            if uname -a | grep \"x86_64 Msys\"; then export SUDO=\"\"; fi\n            $SUDO rm -rf \"$AWS_CLI_PATH\" \"$AWS_SYMLINK_PATH\" \"$HOME/.aws/\" \"/usr/local/bin/aws\" \"/usr/local/bin/aws_completer\" \"/usr/local/aws-cli\"\n        else\n            echo \"No AWS install found\"\n        fi\n    fi\n}\n\nif [ ! \"$(command -v aws)\" ]; then\n    if [ \"$PARAM_AWS_CLI_VERSION\" = \"latest\" ]; then\n        Install_AWS_CLI\n    else\n        if uname -a | grep \"x86_64 Msys\"; then\n            Install_AWS_CLI \"${PARAM_AWS_CLI_VERSION}\"\n        else\n            Install_AWS_CLI \"-${PARAM_AWS_CLI_VERSION}\"\n        fi\n    fi\nelif [ \"$PARAM_AWS_CLI_OVERRIDE\" = 1 ]; then\n    Uninstall_AWS_CLI\n    if uname -a | grep \"x86_64 Msys\"; then\n        Install_AWS_CLI \"${PARAM_AWS_CLI_VERSION}\"\n    else\n        Install_AWS_CLI \"-${PARAM_AWS_CLI_VERSION}\"\n    fi\nelse\n    echo \"AWS CLI is already installed, skipping installation.\"\n    aws --version\nfi\n"
+        environment:
+          PARAM_AWS_CLI_BINARY_DIR: /usr/local/bin
+          PARAM_AWS_CLI_DISABLE_PAGER: true
+          PARAM_AWS_CLI_INSTALL_DIR: /usr/local/aws-cli
+          PARAM_AWS_CLI_OVERRIDE: false
+          PARAM_AWS_CLI_VERSION: latest
+        name: Install AWS CLI - latest
+    - run:
+        command: |
+          PARAM_AWS_CLI_ACCESS_KEY_ID=$(eval echo "\$$PARAM_AWS_CLI_ACCESS_KEY_ID")
+          PARAM_AWS_CLI_SECRET_ACCESS_KEY=$(eval echo "\$$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
+          PARAM_AWS_CLI_REGION=$(eval echo "\$$PARAM_AWS_CLI_REGION")
 
-orbs: 
-  aws-ecr: circleci/aws-ecr@8.1.2
+          aws configure set aws_access_key_id \
+              "$PARAM_AWS_CLI_ACCESS_KEY_ID" \
+              --profile "$PARAM_AWS_CLI_PROFILE_NAME"
 
+          aws configure set aws_secret_access_key \
+              "$PARAM_AWS_CLI_SECRET_ACCESS_KEY" \
+              --profile "$PARAM_AWS_CLI_PROFILE_NAME"
+
+          if [ -n "${AWS_SESSION_TOKEN}" ]; then
+              aws configure set aws_session_token \
+                  "${AWS_SESSION_TOKEN}" \
+                  --profile "$PARAM_AWS_CLI_PROFILE_NAME"
+          fi
+
+          if [ "$PARAM_AWS_CLI_CONFIG_DEFAULT_REGION" = "1" ]; then
+              aws configure set default.region "$PARAM_AWS_CLI_REGION" \
+                  --profile "$PARAM_AWS_CLI_PROFILE_NAME"
+          fi
+
+          if [ "$PARAM_AWS_CLI_CONFIG_PROFILE_REGION" = "1" ]; then
+              aws configure set region "$PARAM_AWS_CLI_REGION" \
+                  --profile "$PARAM_AWS_CLI_PROFILE_NAME"
+          fi
+        environment:
+          PARAM_AWS_CLI_ACCESS_KEY_ID: AWS_ACCESS_KEY_ID
+          PARAM_AWS_CLI_CONFIG_DEFAULT_REGION: true
+          PARAM_AWS_CLI_CONFIG_PROFILE_REGION: true
+          PARAM_AWS_CLI_PROFILE_NAME: default
+          PARAM_AWS_CLI_REGION: AWS_DEFAULT_REGION
+          PARAM_AWS_CLI_SECRET_ACCESS_KEY: AWS_SECRET_ACCESS_KEY
+        name: Configure AWS Access Key ID
+    - run:
+        command: |
+          #!/bin/bash
+          PARAM_REGION=$(eval echo "${PARAM_REGION}")
+          PARAM_ACCOUNT_URL="${!PARAM_REGISTRY_ID}.dkr.ecr.${PARAM_REGION}.amazonaws.com"
+          ECR_COMMAND="ecr"
+
+          if [ "$PARAM_PUBLIC_REGISTRY" == "1" ]; then
+              PARAM_REGION="us-east-1"
+              PARAM_ACCOUNT_URL="public.ecr.aws"
+              ECR_COMMAND="ecr-public"
+          fi
+
+          if [ -n "${PARAM_PROFILE_NAME}" ]; then
+              set -- "$@" --profile "${PARAM_PROFILE_NAME}"
+          fi
+
+          #Shellcheck disable=SC2002
+          if cat ~/.docker/config.json | grep "${PARAM_ACCOUNT_URL}" > /dev/null 2>&1 ; then
+              echo "Credential helper is already installed"
+          else
+              aws "${ECR_COMMAND}" get-login-password --region "${PARAM_REGION}" "$@" | docker login --username AWS --password-stdin "${PARAM_ACCOUNT_URL}"
+          fi
+        environment:
+          PARAM_PROFILE_NAME: default
+          PARAM_PUBLIC_REGISTRY: false
+          PARAM_REGION: ${AWS_REGION}
+          PARAM_REGISTRY_ID: AWS_ECR_REGISTRY_ID
+        name: Log into Amazon ECR with profile default
+    - run:
+        command: |
+          #!/bin/bash
+          PARAM_REGION=$(eval echo "${PARAM_REGION}")
+          PARAM_REPO=$(eval echo "${PARAM_REPO}")
+          PARAM_TAG=$(eval echo "${PARAM_TAG}")
+          PARAM_ACCOUNT_URL="${!PARAM_REGISTRY_ID}.dkr.ecr.${PARAM_REGION}.amazonaws.com"
+          ECR_COMMAND="ecr"
+          number_of_tags_in_ecr=0
+          docker_tag_args=""
+
+          IFS="," read -ra PLATFORMS <<<"${PARAM_PLATFORM}"
+          arch_count=${#PLATFORMS[@]}
+
+          if [ "${PARAM_PUBLIC_REGISTRY}" == "1" ]; then
+            if [ "$arch_count" -gt 1 ]; then
+              echo "AWS ECR does not support multiple platforms for public registries. Please specify only one platform and try again"
+              exit 1
+            fi
+
+            ECR_COMMAND="ecr-public"
+            PARAM_ACCOUNT_URL="public.ecr.aws/${!PARAM_REGISTRY_ID}"
+          fi
+
+          IFS="," read -ra DOCKER_TAGS <<<"${PARAM_TAG}"
+          for tag in "${DOCKER_TAGS[@]}"; do
+            if [ "${PARAM_SKIP_WHEN_TAGS_EXIST}" = "1" ] || [ "${PARAM_SKIP_WHEN_TAGS_EXIST}" = "true" ]; then
+              docker_tag_exists_in_ecr=$(aws "${ECR_COMMAND}" describe-images --profile "${PARAM_PROFILE_NAME}" --registry-id "${!PARAM_REGISTRY_ID}" --region "${PARAM_REGION}" --repository-name "${PARAM_REPO}" --query "contains(imageDetails[].imageTags[], '${tag}')")
+              if [ "${docker_tag_exists_in_ecr}" = "1" ]; then
+                docker pull "${PARAM_ACCOUNT_URL}/${PARAM_REPO}:${tag}"
+                number_of_tags_in_ecr=$((number_of_tags_in_ecr += 1))
+              fi
+            fi
+            docker_tag_args="${docker_tag_args} -t ${PARAM_ACCOUNT_URL}/${PARAM_REPO}:${tag}"
+          done
+
+          if [ "${PARAM_SKIP_WHEN_TAGS_EXIST}" = "0" ] || [[ "${PARAM_SKIP_WHEN_TAGS_EXIST}" = "1" && ${number_of_tags_in_ecr} -lt ${#DOCKER_TAGS[@]} ]]; then
+            if [ "${PARAM_PUSH_IMAGE}" == "1" ]; then
+              set -- "$@" --push
+
+              if [ -n "${PARAM_LIFECYCLE_POLICY_PATH}" ]; then
+                aws ecr put-lifecycle-policy \
+                  --repository-name "${PARAM_REPO}" \
+                  --lifecycle-policy-text "${PARAM_LIFECYCLE_POLICY_PATH}"
+              fi
+
+            else
+              set -- "$@" --load
+            fi
+
+            if [ -n "$PARAM_EXTRA_BUILD_ARGS" ]; then
+              PARAM_EXTRA_BUILD_ARGS=$(eval echo "${PARAM_EXTRA_BUILD_ARGS}")
+              set -- "$@" ${PARAM_EXTRA_BUILD_ARGS}
+            fi
+
+            if [ "${PARAM_PUBLIC_REGISTRY}" == "1" ]; then
+              docker buildx build \
+                -f "${PARAM_PATH}"/"${PARAM_DOCKERFILE}" \
+                ${docker_tag_args} \
+                --platform "${PARAM_PLATFORM}" \
+                --progress plain \
+                "$@" \
+                "${PARAM_PATH}"
+            else
+              docker context create builder
+              docker run --privileged --rm tonistiigi/binfmt --install all
+              docker --context builder buildx create --use
+              docker --context builder buildx build \
+                -f "${PARAM_PATH}"/"${PARAM_DOCKERFILE}" \
+                ${docker_tag_args} \
+                --platform "${PARAM_PLATFORM}" \
+                --progress plain \
+                "$@" \
+                "${PARAM_PATH}"
+            fi
+          fi
+        environment:
+          PARAM_DOCKERFILE: Dockerfile
+          PARAM_EXTRA_BUILD_ARGS: ''
+          PARAM_LIFECYCLE_POLICY_PATH: ''
+          PARAM_PATH: .
+          PARAM_PLATFORM: linux/amd64
+          PARAM_PROFILE_NAME: default
+          PARAM_PUBLIC_REGISTRY: false
+          PARAM_PUSH_IMAGE: true
+          PARAM_REGION: ${AWS_REGION}
+          PARAM_REGISTRY_ID: AWS_ECR_REGISTRY_ID
+          PARAM_REPO: kelvintaywl/fancy-nginx-cached
+          PARAM_SKIP_WHEN_TAGS_EXIST: false
+          PARAM_TAG: latest
+        name: Build Docker Image with buildx
+        no_output_timeout: 10m
 workflows:
   build_publish_dlc_aws_ecr:
     jobs:
-      - aws-ecr/build-and-push-image:
-          repo: kelvintaywl/fancy-nginx-cached
-          executor:
-            name: aws-ecr/default
+    - aws-ecr/build-and-push-image
+  version: 2
+
+# Original config.yml file:
+# version: 2.1
+# 
+# orbs: 
+#   aws-ecr: circleci/aws-ecr@8.1.2
+# 
+# workflows:
+#   build_publish_dlc_aws_ecr:
+#     jobs:
+#       - aws-ecr/build-and-push-image:
+#           repo: kelvintaywl/fancy-nginx-cached
+#           executor:
+#             name: aws-ecr/default
+#             use-docker-layer-caching: true
