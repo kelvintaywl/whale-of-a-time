@@ -22,11 +22,24 @@ jobs:
       - checkout
       - setup_remote_docker:
           # https://circleci.com/docs/2.0/building-docker-images/#docker-version
-          version: 20.10.7
+          version: 20.10.12
+          # intentionally turn of CircleCI DLC
+          docker_layer_caching: false
       - run:
-          name: Build image
+          name: Build image with Buildx
           command: |
-            docker image build --tag "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}" .
+            docker buildx ls
+
+            docker context create builder
+            docker --context builder buildx create --use
+
+            # DEBUG: confirm we are using mybuilder instance
+            docker buildx inspect
+            docker --context builder buildx build \
+                --cache-from=type=registry,ref="${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>" \
+                --cache-to=type=registry,ref="${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>" \
+                --tag="${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}" \
+                .
             docker image tag "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}" "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:<< parameters.image_tag >>"
       - run:
           name: Run built-image as container (background)
@@ -110,8 +123,3 @@ workflows:
     jobs:
       - build_custom_nginx:
           context: docker
-  # Runs services as-per a docker-compose file,
-  # and runs integration tests against spun services.
-  compose_tests:
-    jobs:
-      - docker_compose_tests
