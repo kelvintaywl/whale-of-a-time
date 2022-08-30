@@ -13,7 +13,21 @@ commands:
           command: |
             # login credentials should be provided via context or project environment variables.
             echo $DOCKER_PASSWORD | docker login $DOCKER_REGISTRY --username $DOCKER_LOGIN --password-stdin
-
+  setup-buildx:
+    steps:
+      - run:
+          name: Show docker info
+          command: |
+            docker version
+            docker buildx version
+            docker context inspect
+      - run:
+          name: Setup docker buildx
+          command: |
+            docker context create circleci
+            docker buildx create --use circleci
+            docker buildx ls
+            docker context inspect circleci
 
 jobs:
   build_custom_nginx:
@@ -35,23 +49,26 @@ jobs:
           version: 20.10.12
           # intentionally turn off CircleCI DLC
           docker_layer_caching: false
-      - docker-registry-login
+      - setup-buildx
+      - restore_cache:
+          keys:
+            - docker-{{ arch }}-{{ .Branch }}-
+            - docker-{{ arch }}-
       - run:
-          name: Build image with Buildx
+          name: Docker build with local cache
           command: |
-            docker buildx ls
+            docker buildx build --progress=plain \
+              --tag="${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}" \
+              --cache-to=type=local,mode=max,dest=/tmp/dockercache \
+              --cache-from=type=local,src=/tmp/dockercache \
+              --output=type=docker \
+              .
 
-            docker context create builder
-            docker --context builder buildx create --use
-
-            # DEBUG: confirm we are using mybuilder instance
-            docker --context builder buildx inspect --bootstrap
-            docker --context builder buildx build \
-                --cache-from=type=registry,ref="${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>" --load \
-                --cache-to=type=registry,ref="${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>" \
-                --tag="${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}" \
-                .
-            docker image tag "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}" "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:<< parameters.image_tag >>"
+            docker image ls
+      - save_cache:
+          key: docker-{{ arch }}-{{ .Branch }}-{{ checksum "/tmp/dockercache/index.json" }}
+          paths:
+            - /tmp/dockercache
       - run:
           name: Run built-image as container (background)
           command: |
@@ -74,9 +91,11 @@ jobs:
             docker cp screenshot:/srv/screenshot.png $PWD
       - store_artifacts:
            path: screenshot.png
+      - docker-registry-login
       - run:
           name: Publish image
           command: |
+            docker image tag "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}" "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:<< parameters.image_tag >>"
             docker image push --all-tags "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>"
 
   docker_compose_tests:
