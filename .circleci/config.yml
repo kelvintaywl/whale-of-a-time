@@ -5,6 +5,16 @@ defaults:
     DOCKER_REGISTRY: docker.io
     DOCKER_USER: kelvintaywl
 
+commands:
+  docker-registry-login:
+    steps:
+      - run:
+          name: Login to registry
+          command: |
+            # login credentials should be provided via context or project environment variables.
+            echo $DOCKER_PASSWORD | docker login $DOCKER_REGISTRY --username $DOCKER_LOGIN --password-stdin
+
+
 jobs:
   build_custom_nginx:
     environment:
@@ -25,6 +35,7 @@ jobs:
           version: 20.10.12
           # intentionally turn of CircleCI DLC
           docker_layer_caching: false
+      - docker-registry-login
       - run:
           name: Build image with Buildx
           command: |
@@ -37,6 +48,7 @@ jobs:
             docker --context builder buildx inspect --bootstrap
             docker --context builder buildx build \
                 --cache-from=type=registry,ref="${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>" --load \
+                --cache-to=type=registry,ref="${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>" \
                 --tag="${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}" \
                 .
             docker image tag "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}" "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:<< parameters.image_tag >>"
@@ -65,9 +77,6 @@ jobs:
       - run:
           name: Publish image
           command: |
-            # login credentials should be provided via context or project environment variables.
-            echo $DOCKER_PASSWORD | docker login $DOCKER_REGISTRY --username $DOCKER_LOGIN --password-stdin
-
             docker image push --all-tags "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>"
 
   docker_compose_tests:
