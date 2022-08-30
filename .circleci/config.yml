@@ -34,7 +34,7 @@ jobs:
             docker --context builder buildx create --use
 
             # DEBUG: confirm we are using mybuilder instance
-            docker buildx inspect
+            docker --context builder buildx inspect --bootstrap
             docker --context builder buildx build \
                 --cache-from=type=registry,ref="${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>" \
                 --cache-to=type=registry,ref="${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>" \
