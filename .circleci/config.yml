@@ -118,6 +118,7 @@ jobs:
           # intentionally turn off CircleCI DLC
           docker_layer_caching: false
       - setup-buildx
+      - docker-registry-login
       - run:
           name: Docker build with registry cache
           command: |
@@ -151,7 +152,6 @@ jobs:
             docker cp screenshot:/srv/screenshot.png $PWD
       - store_artifacts:
            path: screenshot.png
-      - docker-registry-login
       - run:
           name: Publish image
           command: |
