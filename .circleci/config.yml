@@ -98,49 +98,65 @@ jobs:
             docker image tag "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}" "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:<< parameters.image_tag >>"
             docker image push --all-tags "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>"
 
-  docker_compose_tests:
-    machine:
-      # Try to use the latest Machine image if possible
-      # See https://circleci.com/docs/2.0/configuration-reference#available-linux-machine-images
-      image: ubuntu-2004:202107-02
+  build_custom_nginx_via_registry:
+    environment:
+      <<: *environment
+    docker:
+      - image: cimg/base:stable
+    parameters:
+      image_name:
+        type: string
+        default: 'fancy-nginx'
+      image_tag:
+        type: string
+        default: 'latest'
     steps:
       - checkout
+      - setup_remote_docker:
+          # https://circleci.com/docs/2.0/building-docker-images/#docker-version
+          version: 20.10.12
+          # intentionally turn off CircleCI DLC
+          docker_layer_caching: false
+      - setup-buildx
       - run:
-          name: Spin up services with Docker Compose
+          name: Docker build with registry cache
           command: |
-            # set prefix to "whale-of-a-time" for names of our services
-            docker-compose -p whale-of-a-time up -d
-      - run:
-          # Showcase another way to check on our server, besides dockerize
-          name: Wait on application to be ready
-          command: |
-            N=8
-            while [ $N -gt 0 ]
-            do
-              if $(nc -z localhost 3000); then
-                echo "Connected!"
-                exit 0
-              fi
-              echo "Not connected; retrying"
-              N=$(( $N - 1 ))
-              sleep 1
-            done
-            exit 1
-      - run:
-          name: Run integration tests with Newman
-          command: |
-            docker ps
+            docker buildx build --progress=plain \
+              --tag="${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}" \
+              --cache-to=type=registry,mode=max,ref="${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:cache" \
+              --cache-from=type=registry,ref="${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:cache" \
+              --output=type=docker \
+              .
 
-            # Newman is a test runner for Postman collections
-            # Here, we attach our newman container to the same network as our app server
-            # so it can look up the app server at localhost:3000.
-            # Alternatively, we could have installed Newman on this local machine
-            # and it would be able to access the exposed app server at localhost:3000 too.
-            # I wanted to demonstrate how containers can talk to one another if they are in the same network.
-            docker container run --network container:whale-of-a-time_server_1 \
-            -v $(pwd)/postman_collections:/etc/newman \
-            -t postman/newman \
-            run /etc/newman/Postgrest.json
+            docker image ls
+      - run:
+          name: Run built-image as container (background)
+          command: |
+            docker container run -d --name fancy-nginx -p "8080:80" "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}"
+      - run:
+          name: Check container is up
+          command: |
+            # Because we are using remote_docker, all docker-related activities run inside this remote container.
+            # In other words, the nginx server is not directly accessible to our primary container here.
+            # Hence, we run dockerize in the same network in order to poll it.
+            # NOTE that we are polling port 80, not 8080 since inside the network, our fancy-nginx is exposed at port 80 instead.
+            # See https://circleci.com/docs/2.0/building-docker-images/#accessing-services
+            docker container run --network container:fancy-nginx docker.io/jwilder/dockerize -wait http://localhost:80 -wait-retry-interval 2s -timeout 20s
+      - run:
+          name: Printscreen webpage served by container
+          command: |
+            # https://hub.docker.com/r/lifenz/docker-screenshot
+            # Save a screenshot as screenshot.png at 1280px after pausing 2000ms, with zoom factor: 1
+            docker container run --network container:fancy-nginx --name screenshot lifenz/docker-screenshot http://localhost:80 screenshot.png 1280px 2000 1
+            docker cp screenshot:/srv/screenshot.png $PWD
+      - store_artifacts:
+           path: screenshot.png
+      - docker-registry-login
+      - run:
+          name: Publish image
+          command: |
+            docker image tag "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}" "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:<< parameters.image_tag >>"
+            docker image push --all-tags "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>"
 
 workflows:
   # Builds a custom image,
@@ -149,4 +165,6 @@ workflows:
   build_test_publish:
     jobs:
       - build_custom_nginx:
+          context: docker
+      - build_custom_nginx_via_registry:
           context: docker
