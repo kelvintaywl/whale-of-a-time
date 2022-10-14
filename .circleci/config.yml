@@ -5,6 +5,14 @@ defaults:
     DOCKER_REGISTRY: docker.io
     DOCKER_USER: kelvintaywl
 
+executors:
+  container-agent-kaniko:
+    resource_class: kelvintaywl/cntr-agent-orange
+    docker:
+      # we use the debug tag since it comes with sh
+      - image: gcr.io/kaniko-project/executor:debug
+        entrypoint: ""
+
 jobs:
   build_custom_nginx:
     environment:
@@ -57,61 +65,38 @@ jobs:
             echo $DOCKER_PASSWORD | docker login $DOCKER_REGISTRY --username $DOCKER_LOGIN --password-stdin
 
             docker image push --all-tags "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>"
-
-  docker_compose_tests:
-    machine:
-      # Try to use the latest Machine image if possible
-      # See https://circleci.com/docs/2.0/configuration-reference#available-linux-machine-images
-      image: ubuntu-2004:202107-02
+  kaniko-build-push-docker-hub:
+    environment:
+      <<: *environment
+    executor: container-agent-kaniko
+    parameters:
+      image_name:
+        type: string
+        default: 'fancy-nginx'
+      image_tag:
+        type: string
+        default: 'latest'
     steps:
       - checkout
       - run:
-          name: Spin up services with Docker Compose
+          name: add Docker Hub credentials
           command: |
-            # set prefix to "whale-of-a-time" for names of our services
-            docker-compose -p whale-of-a-time up -d
+            mkdir -p /kaniko/.docker
+            ./config.sh
+            mv config.json /kaniko/.docker
       - run:
-          # Showcase another way to check on our server, besides dockerize
-          name: Wait on application to be ready
+          name: Build and Push image
           command: |
-            N=8
-            while [ $N -gt 0 ]
-            do
-              if $(nc -z localhost 3000); then
-                echo "Connected!"
-                exit 0
-              fi
-              echo "Not connected; retrying"
-              N=$(( $N - 1 ))
-              sleep 1
-            done
-            exit 1
-      - run:
-          name: Run integration tests with Newman
-          command: |
-            docker ps
-
-            # Newman is a test runner for Postman collections
-            # Here, we attach our newman container to the same network as our app server
-            # so it can look up the app server at localhost:3000.
-            # Alternatively, we could have installed Newman on this local machine
-            # and it would be able to access the exposed app server at localhost:3000 too.
-            # I wanted to demonstrate how containers can talk to one another if they are in the same network.
-            docker container run --network container:whale-of-a-time_server_1 \
-            -v $(pwd)/postman_collections:/etc/newman \
-            -t postman/newman \
-            run /etc/newman/Postgrest.json
-
+            # See https://circleci.com/docs/env-vars#built-in-environment-variables
+            /kaniko/executor \
+                --context "$(pwd)" \
+                --dockerfile "$(pwd)/Dockerfile" \
+                --destination "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:kaniko-docker-${CIRCLE_SHA1}"
 workflows:
   # Builds a custom image,
   # spins it up for tests,
   # and publishes to Docker Hub!
-  build_test_publish:
+  publish:
     jobs:
-      - build_custom_nginx:
+      - kaniko-build-push-docker-hub:
           context: docker
-  # Runs services as-per a docker-compose file,
-  # and runs integration tests against spun services.
-  compose_tests:
-    jobs:
-      - docker_compose_tests
