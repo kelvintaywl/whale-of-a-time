@@ -39,7 +39,7 @@ jobs:
             remote_host=$(python -c "import os; from urllib.parse import urlparse; o = urlparse(os.environ['DOCKER_HOST']); print(o.hostname)")
 
             echo "Looking up ${remote_host}"
-            curl -s "https://${remote_host}:8080"
+            telnet $remote_host 8080
 
 #       - run:
 #           name: Check container is up
