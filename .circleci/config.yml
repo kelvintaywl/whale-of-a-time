@@ -30,6 +30,10 @@ jobs:
       - checkout
       - run: sudo apt-get install postgresql-client
       - run:
+          # using Dockerize
+          name: Wait on Postgres to be ready
+          command: dockerize -wait tcp://127.0.0.1:5432
+      - run:
           name: Run SQL schema migrations
           command: |
             psql -U $POSTGRES_USER -d $POSTGRES_DB -h 127.0.0.1 -p 5432 -f postgres/init/schema.sql
