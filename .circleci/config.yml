@@ -10,6 +10,10 @@ jobs:
     docker:
       # main container
       - image: cimg/node:lts
+        environment:
+          POSTGRES_DB: wiki
+          POSTGRES_USER: Free
+          POSTGRES_PASSWORD: Willy
       # sidecar containers
       - image: library/postgres:13
         environment:
@@ -24,7 +28,11 @@ jobs:
           PGRST_OPENAPI_SERVER_PROXY_URI: "http://127.0.0.1:3000"
     steps:
       - checkout
-      # TODO: schema migration on Postgres
+      - run: sudo apt-get install postgresql-client
+      - run:
+          name: Run SQL schema migrations
+          command: |
+            psql -U $POSTGRES_USER -d $POSTGRES_DB -h 127.0.0.1 -p 5432 -f postgres/init/schema.sql
       - run: sudo npm install -g newman
       - run:
           # Showcase another way to check on our server, besides dockerize
