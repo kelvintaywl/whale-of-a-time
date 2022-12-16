@@ -25,7 +25,7 @@ jobs:
     steps:
       - checkout
       # TODO: schema migration on Postgres
-      - run: npm install -g newman
+      - run: sudo npm install -g newman
       - run:
           # Showcase another way to check on our server, besides dockerize
           name: Wait on application to be ready
