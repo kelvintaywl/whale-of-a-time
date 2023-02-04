@@ -18,7 +18,9 @@ jobs:
           command: |
             # ./build-images.sh
             # docker images
-            echo 'export DOCKER_PASS=$DOCKER_TOKEN' >> $BASH_ENV
+            docker login -u jkzilla -p dckr_pat_TSB1Z-i_8bAZJ0X797lMllQFGLw
+            docker build -t jkzilla/ci-demo-docker-primary:0.0.1 .
+            docker push jkzilla/ci-demo-docker-primary:0.0.1
       - run:
           name: "Install Test Prerequisites"
           command: |
