@@ -20,6 +20,8 @@ jobs:
         default: 'latest'
       docker_executor_image:
         type: string
+      remote_docker_version:
+        type: string
     steps:
       - checkout
       - setup_remote_docker:
@@ -50,3 +52,6 @@ workflows:
               docker_executor_image:
                 - docker:git
                 - cimg/base:current
+              remote_docker_version:
+                - '19.03.8'
+                - '20.10.18'
