@@ -10,7 +10,7 @@ jobs:
     environment:
       <<: *environment
     docker:
-      - image: docker:git
+      - image: << parameters.docker_executor_image >>
     parameters:
       image_name:
         type: string
@@ -18,22 +18,35 @@ jobs:
       image_tag:
         type: string
         default: 'latest'
+      docker_executor_image:
+        type: string
     steps:
       - checkout
       - setup_remote_docker:
           # using old Docker version
           version: 19.03.8
+      - run: docker version
+      - run: docker info
       - run:
           name: Build image
           command: |
             docker build --tag "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}" .
             docker tag "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}" "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:<< parameters.image_tag >>"
       - run:
-          name: Inspect built image
+          name: Inspect built image with format
           command: |
             docker inspect --format {{.Config.Cmd}} "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}"
+      - run:
+          name: Inspect built image as-is
+          command: |
+            docker inspect "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}"
 
 workflows:
   build_test_publish:
     jobs:
-      - build_custom_nginx
+      - build_custom_nginx:
+          matrix:
+            parameters:
+              docker_executor_image:
+                - docker:git
+                - cimg/base:current
