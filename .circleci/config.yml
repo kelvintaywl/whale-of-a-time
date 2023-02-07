@@ -10,7 +10,7 @@ jobs:
     environment:
       <<: *environment
     docker:
-      - image: cimg/base:stable
+      - image: docker:git
     parameters:
       image_name:
         type: string
