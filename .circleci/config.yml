@@ -29,7 +29,7 @@ jobs:
             docker build --tag "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}" .
             docker tag "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}" "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:<< parameters.image_tag >>"
       - run:
-          name: Run built-image as container (background)
+          name: Inspect built image
           command: |
             docker inspect --format {{.Config.Cmd}} "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}"
 
