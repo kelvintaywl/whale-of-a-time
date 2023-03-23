@@ -2,29 +2,6 @@ version: '3.7'
 
 services:
   server:
-    image: postgrest/postgrest
+    build: .
     ports:
-      - "3000:3000"
-    environment:
-      PGRST_DB_URI: postgres://Free:Willy@db:5432/wiki
-      PGRST_DB_SCHEMA: public
-      PGRST_DB_ANON_ROLE: Free
-      PGRST_OPENAPI_SERVER_PROXY_URI: "http://127.0.0.1:3000"
-    depends_on:
-      - db
-  db:
-    image: library/postgres:13
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_DB: wiki
-      POSTGRES_USER: Free
-      POSTGRES_PASSWORD: Willy
-    volumes:
-      - "./postgres/init:/docker-entrypoint-initdb.d"
-    healthcheck:
-      test: ["psql", "-U", "$$POSTGRES_USER", "-d", "$$POSTGRES_DB", "-c", "'SELECT 1;'"]
-      interval: 20s
-      timeout: 20s
-      retries: 3
-      start_period: 30s
+      - "8080:80"
