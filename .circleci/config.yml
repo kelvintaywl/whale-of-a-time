@@ -24,7 +24,9 @@ jobs:
         default: 'latest'
     steps:
       - checkout
-      - run: docker info
+      - run: |
+          docker version
+          docker-compose version
       - run:
           name: Build image
           command: |
