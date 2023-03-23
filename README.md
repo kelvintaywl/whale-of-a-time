@@ -45,7 +45,7 @@ Features:
 
 ### `compose_tests`
 
-This workflow spins up 2 containers of a fictional service (1 DB, 1 web app) via Docker-Compose, and runs integration tests ([Newman](https://learning.postman.com/docs/collections/using-newman-cli/command-line-integration-with-newman/#:~:text=Newman%20is%20a%20command%2Dline,CI)%20servers%20and%20build%20systems.)) against the web app.
+This workflow spins up 2 containers of a fictional service (1 DB, 1 web app) via Docker-Compose, and runs integration tests ([Newman](https://learning.postman.com/docs/collections/using-newman-cli/command-line-integration-with-newman)) against the web app.
 
 Features:
  - `docker-compose -p ${prefix} up`
