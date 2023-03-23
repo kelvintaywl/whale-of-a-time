@@ -14,6 +14,13 @@ jobs:
 #     environment:
 #       DOCKER_BUILDKIT: '1'
 #       BUILDKIT_PROGRESS: plain
+    parameters:
+      image_name:
+        type: string
+        default: 'fancy-nginx'
+      image_tag:
+        type: string
+        default: 'latest'
     steps:
       - checkout
       - run:
