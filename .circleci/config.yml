@@ -9,13 +9,12 @@ jobs:
   build_custom_nginx:
     environment:
       <<: *environment
+      DOCKER_BUILDKIT: '1'
+      BUILDKIT_PROGRESS: plain
     machine:
       image: ubuntu-2004-cuda-11.4:202110-01
       docker_layer_caching: true
     resource_class: gpu.nvidia.medium
-#     environment:
-#       DOCKER_BUILDKIT: '1'
-#       BUILDKIT_PROGRESS: plain
     parameters:
       image_name:
         type: string
