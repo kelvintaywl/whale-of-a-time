@@ -7,22 +7,15 @@ defaults:
 
 jobs:
   build_custom_nginx:
-    environment:
-      <<: *environment
-    docker:
-      - image: cimg/base:stable
-    parameters:
-      image_name:
-        type: string
-        default: 'fancy-nginx'
-      image_tag:
-        type: string
-        default: 'latest'
+    machine:
+      image: ubuntu-2004-cuda-11.4:202110-01
+      docker_layer_caching: true
+    resource_class: gpu.nvidia.medium
+#     environment:
+#       DOCKER_BUILDKIT: '1'
+#       BUILDKIT_PROGRESS: plain
     steps:
       - checkout
-      - setup_remote_docker:
-          # https://circleci.com/docs/2.0/building-docker-images/#docker-version
-          version: 20.10.18
       - run:
           name: Build image
           command: |
@@ -50,57 +43,6 @@ jobs:
             docker cp screenshot:/srv/screenshot.png $PWD
       - store_artifacts:
            path: screenshot.png
-      - run:
-          name: Publish image
-          command: |
-            # login credentials should be provided via context or project environment variables.
-            echo $DOCKER_PASSWORD | docker login $DOCKER_REGISTRY --username $DOCKER_LOGIN --password-stdin
-
-            docker image push --all-tags "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>"
-
-  docker_compose_tests:
-    machine:
-      # Try to use the latest Machine image if possible
-      # See https://circleci.com/developer/machine/image/ubuntu-2204
-      image: ubuntu-2204:2022.10.2
-    steps:
-      - checkout
-      - run:
-          name: Spin up services with Docker Compose
-          command: |
-            # set prefix to "whale-of-a-time" for names of our services
-            docker-compose -p whale-of-a-time up -d
-      - run:
-          # Showcase another way to check on our server, besides dockerize
-          name: Wait on application to be ready
-          command: |
-            N=8
-            while [ $N -gt 0 ]
-            do
-              if $(nc -z localhost 3000); then
-                echo "Connected!"
-                exit 0
-              fi
-              echo "Not connected; retrying"
-              N=$(( $N - 1 ))
-              sleep 1
-            done
-            exit 1
-      - run:
-          name: Run integration tests with Newman
-          command: |
-            docker ps
-
-            # Newman is a test runner for Postman collections
-            # Here, we attach our newman container to the same network as our app server
-            # so it can look up the app server at localhost:3000.
-            # Alternatively, we could have installed Newman on this local machine
-            # and it would be able to access the exposed app server at localhost:3000 too.
-            # I wanted to demonstrate how containers can talk to one another if they are in the same network.
-            docker container run --network container:whale-of-a-time-server-1 \
-            -v $(pwd)/postman_collections:/etc/newman \
-            -t postman/newman \
-            run /etc/newman/Postgrest.json
 
 workflows:
   # Builds a custom image,
@@ -110,8 +52,3 @@ workflows:
     jobs:
       - build_custom_nginx:
           context: docker
-  # Runs services as-per a docker-compose file,
-  # and runs integration tests against spun services.
-  compose_tests:
-    jobs:
-      - docker_compose_tests
