@@ -6,7 +6,7 @@ jobs:
       - image: cimg/base:current
     steps:
       - setup_remote_docker:
-          version: '20.10.7'
+          version: '20.10.18'
       - checkout
       - run:
           name: Spin up services with Docker Compose
