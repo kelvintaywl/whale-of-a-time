@@ -1,12 +1,19 @@
 version: 2.1
 
-jobs:
-  docker_compose_tests:
+executors:
+  docker:
     docker:
       - image: cimg/base:current
+  machine:
+    machine:
+      image: ubuntu-2204:2023.02.1
+
+commands:
+  docker_compose_test:
     steps:
-      - setup_remote_docker:
-          version: '20.10.18'
+      - run: |
+          docker version
+          docker-compose version
       - checkout
       - run:
           name: Spin up services with Docker Compose
@@ -54,7 +61,21 @@ jobs:
             -t postman/newman \
             run /etc/newman/Postgrest.json
 
+jobs:
+  docker_compose_test_machine:
+    executor: machine
+    steps:
+      - docker_compose_test
+  docker_compose_test_remote_docker:
+    executor: docker
+    steps:
+      - setup_remote_docker:
+          version: '20.10.18'
+      - docker_compose_test
+
+
 workflows:
   compose_tests:
     jobs:
-      - docker_compose_tests
+      - docker_compose_test_machine
+      - docker_compose_test_remote_docker
