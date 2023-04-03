@@ -23,9 +23,3 @@ services:
       PGPORT: 5433
     volumes:
       - "./postgres/init:/docker-entrypoint-initdb.d"
-    healthcheck:
-      test: ["psql", "-U", "$$POSTGRES_USER", "-d", "$$POSTGRES_DB", "-c", "'SELECT 1;'"]
-      interval: 20s
-      timeout: 20s
-      retries: 3
-      start_period: 30s
