@@ -17,7 +17,7 @@ jobs:
           # Showcase another way to check on our server, besides dockerize
           name: Wait on application to be ready
           command: |
-            N=8
+            N=50
             while [ $N -gt 0 ]
             do
               if $(nc -z localhost 3000); then
