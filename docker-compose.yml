@@ -1,4 +1,4 @@
-version: '3.7'
+version: '3.4'
 
 services:
   server:
@@ -6,7 +6,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      PGRST_DB_URI: postgres://Free:Willy@db:5432/wiki
+      PGRST_DB_URI: postgres://Free:Willy@db:5433/wiki
       PGRST_DB_SCHEMA: public
       PGRST_DB_ANON_ROLE: Free
       PGRST_OPENAPI_SERVER_PROXY_URI: "http://127.0.0.1:3000"
@@ -15,11 +15,12 @@ services:
   db:
     image: library/postgres:13
     ports:
-      - "5432:5432"
+      - "5433:5433"
     environment:
       POSTGRES_DB: wiki
       POSTGRES_USER: Free
       POSTGRES_PASSWORD: Willy
+      PGPORT: 5433
     volumes:
       - "./postgres/init:/docker-entrypoint-initdb.d"
     healthcheck:
