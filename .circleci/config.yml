@@ -14,10 +14,19 @@ jobs:
             # set prefix to "whale-of-a-time" for names of our services
             docker-compose -p whale-of-a-time up -d
       - run:
+          background: true
+          name: Inspect server logs (background)
+          command: |
+            while true; do
+              sleep 2
+              docker logs whale-of-a-time-server-1
+              echo "======"
+            done
+      - run:
           # Showcase another way to check on our server, besides dockerize
           name: Wait on application to be ready
           command: |
-            N=50
+            N=8
             while [ $N -gt 0 ]
             do
               if $(nc -z localhost 3000); then
