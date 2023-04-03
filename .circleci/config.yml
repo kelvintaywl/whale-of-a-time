@@ -20,6 +20,7 @@ commands:
           command: |
             # set prefix to "whale-of-a-time" for names of our services
             docker-compose -p whale-of-a-time up -d
+      - run: docker network inspect whale-of-a-time_default
       - run:
           background: true
           name: Inspect server logs (background)
