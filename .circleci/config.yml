@@ -1,27 +1,101 @@
-
 version: 2.1
 
-workflows:
-  main:
-    jobs:
-      - build
-jobs:
-  build:
-    docker:
-      - image: cimg/base:2022.01
+commands:
+  upgrade_ssh:
     steps:
       - checkout
-      - setup_remote_docker:
-          version: "20.10.11"
       - run:
-          name: "Build Docker Images"
+          name: Install OpenSSH 8.9
           command: |
-            # ./build-images.sh
-            # docker images
-            docker login -u jkzilla -p dckr_pat_TSB1Z-i_8bAZJ0X797lMllQFGLw
-            docker build -t jkzilla/ci-demo-docker-primary:0.0.1 .
-            docker push jkzilla/ci-demo-docker-primary:0.0.1
+            sudo apt-get update
+            mkdir ~/tempdownload; 
+            cd ~/tempdownload; 
+            wget https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-8.9p1.tar.gz; 
+            tar zxvf openssh-8.9p1.tar.gz; 
+            cd openssh-8.9p1 && ./configure && make && sudo make install
+            # echo "export PATH='~/tempdownload/openssh-8.9p1:$PATH'" > $BASH_ENV
+      - run: |
+          which ssh
+          ssh -V
+          ls /home/circleci/.ssh/
+  inspect:
+    steps:
+      - run: |
+          ssh -V
+      - run: |
+          openssl version
+#       - run: |
+#           cat /home/circleci/.ssh/config
+#           sed 's/IdentitiesOnly no/IdentitiesOnly yes/1' /home/circleci/.ssh/config
+          
+#           sed 's/IdentitiesOnly no/IdentitiesOnly yes/1' /home/circleci/.ssh/config > /home/circleci/.ssh/config
+#           cat /home/circleci/.ssh/config
+#       - run: |
+#           # check SSH config validity
+#           sshd -t
+      - run: |
+          docker version
+          docker info
+      - run: |
+          docker-compose version
+      - run: |
+          lsb_release -a
+          uname -r
+  install-sfdx:
+    steps:
+      - run: |
+          node -v
+          npm -v
+      - run: |
+          wget https://developer.salesforce.com/media/salesforce-cli/sfdx-linux-amd64.tar.xz
+          mkdir sfdx
+          tar xJf sfdx-linux-amd64.tar.xz -C sfdx --strip-components 1
+          ./sfdx/install
+          
+          sfdx commands
+
+jobs:
+  default:
+    machine: true
+    steps:
+      - inspect
+      - install-sfdx
+  test-path:
+    machine:
+      image: ubuntu-2004:202201-02
+    steps:
       - run:
-          name: "Install Test Prerequisites"
           command: |
-            echo $DOCKER_PASS
+            wget https://github.com/mikefarah/yq/releases/download/v4.25.1/yq_linux_amd64.tar.gz -O - | tar xz && mv yq_linux_amd64 ~/bin/yq
+            pwd
+            echo "---------------"
+            ls -laH $HOME/bin
+            
+            PATH=$HOME/bin:$PATH
+            echo "export PATH=$PATH" >> $BASH_ENV
+      - run:
+          command: printenv PATH
+  build:
+    parameters:
+      img:
+        type: string
+    machine:
+      image: << parameters.img >>
+    resource_class: medium
+    steps:
+      - inspect
+ 
+workflows:
+  jul-27-2023:
+    jobs:
+      - build:
+          matrix:
+            parameters:
+              img:
+                # See https://circleci.com/developer/machine/image/ubuntu-2004#image-tags
+                - "ubuntu-2004:202008-01"
+                - "ubuntu-2004:202104-01"
+                - "ubuntu-2004:202107-02"
+                - "ubuntu-2004:2023.04.2"
+                - "ubuntu-2004:2023.07.1"
+
