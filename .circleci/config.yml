@@ -3,7 +3,7 @@ version: 2.1
 defaults:
   environment: &environment
     DOCKER_REGISTRY: docker.io
-    DOCKER_USER: kelvintaywl
+    DOCKER_USER: jkzilla
 
 jobs:
   build_custom_nginx:
