@@ -1,101 +1,117 @@
 version: 2.1
 
-commands:
-  upgrade_ssh:
+defaults:
+  environment: &environment
+    DOCKER_REGISTRY: docker.io
+    DOCKER_USER: kelvintaywl
+
+jobs:
+  build_custom_nginx:
+    environment:
+      <<: *environment
+    docker:
+      - image: cimg/base:stable
+    parameters:
+      image_name:
+        type: string
+        default: 'fancy-nginx'
+      image_tag:
+        type: string
+        default: 'latest'
+    steps:
+      - checkout
+      - setup_remote_docker:
+          # https://circleci.com/docs/2.0/building-docker-images/#docker-version
+          version: 20.10.18
+      - run:
+          name: Build image
+          command: |
+            docker image build --tag "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}" .
+            docker image tag "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}" "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:<< parameters.image_tag >>"
+      - run:
+          name: Run built-image as container (background)
+          command: |
+            docker container run -d --name fancy-nginx -p "8080:80" "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>:${CIRCLE_SHA1}"
+      - run:
+          name: Check container is up
+          command: |
+            # Because we are using remote_docker, all docker-related activities run inside this remote container.
+            # In other words, the nginx server is not directly accessible to our primary container here.
+            # Hence, we run dockerize in the same network in order to poll it.
+            # NOTE that we are polling port 80, not 8080 since inside the network, our fancy-nginx is exposed at port 80 instead.
+            # See https://circleci.com/docs/2.0/building-docker-images/#accessing-services
+            docker container run --network container:fancy-nginx docker.io/jwilder/dockerize -wait http://localhost:80 -wait-retry-interval 2s -timeout 20s
+      - run:
+          name: Printscreen webpage served by container
+          command: |
+            # https://hub.docker.com/r/lifenz/docker-screenshot
+            # Save a screenshot as screenshot.png at 1280px after pausing 2000ms, with zoom factor: 1
+            docker container run --network container:fancy-nginx --name screenshot lifenz/docker-screenshot http://localhost:80 screenshot.png 1280px 2000 1
+            docker cp screenshot:/srv/screenshot.png $PWD
+      - store_artifacts:
+           path: screenshot.png
+      - run:
+          name: Publish image
+          command: |
+            # login credentials should be provided via context or project environment variables.
+            echo $DOCKER_PASSWORD | docker login $DOCKER_REGISTRY --username $DOCKER_LOGIN --password-stdin
+
+            docker image push --all-tags "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>"
+
+  docker_compose_tests:
+    machine:
+      # Try to use the latest Machine image if possible
+      # See https://circleci.com/developer/machine/image/ubuntu-2204
+      image: ubuntu-2204:2022.10.2
     steps:
       - checkout
       - run:
-          name: Install OpenSSH 8.9
+          name: Spin up services with Docker Compose
           command: |
-            sudo apt-get update
-            mkdir ~/tempdownload; 
-            cd ~/tempdownload; 
-            wget https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-8.9p1.tar.gz; 
-            tar zxvf openssh-8.9p1.tar.gz; 
-            cd openssh-8.9p1 && ./configure && make && sudo make install
-            # echo "export PATH='~/tempdownload/openssh-8.9p1:$PATH'" > $BASH_ENV
-      - run: |
-          which ssh
-          ssh -V
-          ls /home/circleci/.ssh/
-  inspect:
-    steps:
-      - run: |
-          ssh -V
-      - run: |
-          openssl version
-#       - run: |
-#           cat /home/circleci/.ssh/config
-#           sed 's/IdentitiesOnly no/IdentitiesOnly yes/1' /home/circleci/.ssh/config
-          
-#           sed 's/IdentitiesOnly no/IdentitiesOnly yes/1' /home/circleci/.ssh/config > /home/circleci/.ssh/config
-#           cat /home/circleci/.ssh/config
-#       - run: |
-#           # check SSH config validity
-#           sshd -t
-      - run: |
-          docker version
-          docker info
-      - run: |
-          docker-compose version
-      - run: |
-          lsb_release -a
-          uname -r
-  install-sfdx:
-    steps:
-      - run: |
-          node -v
-          npm -v
-      - run: |
-          wget https://developer.salesforce.com/media/salesforce-cli/sfdx-linux-amd64.tar.xz
-          mkdir sfdx
-          tar xJf sfdx-linux-amd64.tar.xz -C sfdx --strip-components 1
-          ./sfdx/install
-          
-          sfdx commands
+            # set prefix to "whale-of-a-time" for names of our services
+            docker-compose -p whale-of-a-time up -d
+      - run:
+          # Showcase another way to check on our server, besides dockerize
+          name: Wait on application to be ready
+          command: |
+            N=8
+            while [ $N -gt 0 ]
+            do
+              if $(nc -z localhost 3000); then
+                echo "Connected!"
+                exit 0
+              fi
+              echo "Not connected; retrying"
+              N=$(( $N - 1 ))
+              sleep 1
+            done
+            exit 1
+      - run:
+          name: Run integration tests with Newman
+          command: |
+            docker ps
 
-jobs:
-  default:
-    machine: true
-    steps:
-      - inspect
-      - install-sfdx
-  test-path:
-    machine:
-      image: ubuntu-2004:202201-02
-    steps:
-      - run:
-          command: |
-            wget https://github.com/mikefarah/yq/releases/download/v4.25.1/yq_linux_amd64.tar.gz -O - | tar xz && mv yq_linux_amd64 ~/bin/yq
-            pwd
-            echo "---------------"
-            ls -laH $HOME/bin
-            
-            PATH=$HOME/bin:$PATH
-            echo "export PATH=$PATH" >> $BASH_ENV
-      - run:
-          command: printenv PATH
-  build:
-    parameters:
-      img:
-        type: string
-    machine:
-      image: << parameters.img >>
-    resource_class: medium
-    steps:
-      - inspect
- 
+            # Newman is a test runner for Postman collections
+            # Here, we attach our newman container to the same network as our app server
+            # so it can look up the app server at localhost:3000.
+            # Alternatively, we could have installed Newman on this local machine
+            # and it would be able to access the exposed app server at localhost:3000 too.
+            # I wanted to demonstrate how containers can talk to one another if they are in the same network.
+            docker container run --network container:whale-of-a-time-server-1 \
+            -v $(pwd)/postman_collections:/etc/newman \
+            -t postman/newman \
+            run /etc/newman/Postgrest.json
+
 workflows:
-  jul-27-2023:
+  # Builds a custom image,
+  # spins it up for tests,
+  # and publishes to Docker Hub!
+  build_test_publish:
     jobs:
-      - build:
-          matrix:
-            parameters:
-              img:
-                # See https://circleci.com/developer/machine/image/ubuntu-2004#image-tags
-                - "ubuntu-2004:202008-01"
-                - "ubuntu-2004:202104-01"
-                - "ubuntu-2004:202107-02"
-                - "ubuntu-2004:2023.04.2"
-                - "ubuntu-2004:2023.07.1"
-
+      - build_custom_nginx:
+          context: docker
+  # Runs services as-per a docker-compose file,
+  # and runs integration tests against spun services.
+  compose_tests:
+    jobs:
+      - docker_compose_tests
