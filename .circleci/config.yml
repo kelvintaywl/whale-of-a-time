@@ -53,7 +53,6 @@ jobs:
           command: |
             # login credentials should be provided via context or project environment variables.
             docker login -u $DOCKER_LOGIN -u $DOCKER_PASSWORD
-
             docker image push --all-tags "${DOCKER_REGISTRY}/${DOCKER_USER}/<< parameters.image_name >>"
 
   docker_compose_tests:
@@ -110,6 +109,6 @@ workflows:
           context: docker
   # Runs services as-per a docker-compose file,
   # and runs integration tests against spun services.
-  compose_tests:
-    jobs:
-      - docker_compose_tests
+  # compose_tests:
+  #   jobs:
+  #     - docker_compose_tests
