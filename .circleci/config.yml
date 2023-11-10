@@ -12,14 +12,8 @@ workflows:
           auth:
             - aws-cli/setup:
                 role_arn: arn:aws:iam::483285841698:oidc-provider/oidc.circleci.com/org/39114a72-17c0-4a08-96b6-5d6e8126b7f2
-          create_repo: true
           dockerfile: Dockerfile
-          public_registry: false
           push_image: true
           region: 'us-east-2'
           repo: jkg
-          repo_policy_path: repo-policy.json
-          repo_scan_on_push: true
-          set_repo_policy: true
-          skip_when_tags_exist: false
           tag: latest,myECRRepoTag
