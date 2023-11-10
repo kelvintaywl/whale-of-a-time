@@ -17,7 +17,7 @@ workflows:
           public_registry: false
           push_image: true
           region: 'us-east-2'
-          repo: myECRRepository
+          repo: jkg
           repo_policy_path: repo-policy.json
           repo_scan_on_push: true
           set_repo_policy: true
