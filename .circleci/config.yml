@@ -11,22 +11,13 @@ workflows:
           account_id: ${AWS_ACCOUNT_ID}
           auth:
             - aws-cli/setup:
-                profile: OIDC-USER
                 role_arn: arn:aws:iam::483285841698:oidc-provider/oidc.circleci.com/org/39114a72-17c0-4a08-96b6-5d6e8126b7f2
           create_repo: true
-          dockerfile: myDockerfile
-          executors: base
-          extra_build_args: '--compress'
-          no_output_timeout: 20m
-          path: pathToMyDockerfile
-          platform: linux/amd64
-          profile_name: OIDC-User
+          dockerfile: Dockerfile
           public_registry: false
           push_image: true
           region: 'us-east-2'
           repo: myECRRepository
-          repo_encryption_kms_key: arn:aws:kms::123456789012:key/UUID4_OF_KMS_KEY_ID
-          repo_encryption_type: KMS
           repo_policy_path: repo-policy.json
           repo_scan_on_push: true
           set_repo_policy: true
