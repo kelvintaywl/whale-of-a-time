@@ -12,7 +12,6 @@ workflows:
             - aws-cli/setup:
                 profile: OIDC-USER
                 role_arn: arn:aws:iam::483285841698:oidc-provider/oidc.circleci.com/org/39114a72-17c0-4a08-96b6-5d6e8126b7f2
-          context: CircleCI_OIDC_Token
           create_repo: true
           dockerfile: myDockerfile
           executors: base
