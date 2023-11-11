@@ -1,0 +1,5 @@
+{
+    "registryId": "483285841698",
+    "repositoryName": "jkg",
+    "policyText": "{\n  \"Version\" : \"2012-10-17\",\n  \"Statement\" : [ {\n    \"Sid\" : \"new statement\",\n    \"Effect\" : \"Allow\",\n    \"Principal\" : {\n      \"AWS\" : \"arn:aws:iam::483285841698:user/jkg\"\n    },\n    \"Action\" : [ \"ecr:BatchGetImage\", \"ecr:CompleteLayerUpload\", \"ecr:DeleteLifecyclePolicy\", \"ecr:DeleteRepository\", \"ecr:DeleteRepositoryPolicy\", \"ecr:DescribeImages\", \"ecr:DescribeRepositories\", \"ecr:GetDownloadUrlForLayer\", \"ecr:GetLifecyclePolicy\", \"ecr:GetLifecyclePolicyPreview\", \"ecr:GetRepositoryPolicy\", \"ecr:InitiateLayerUpload\", \"ecr:ListImages\", \"ecr:PutImage\", \"ecr:PutLifecyclePolicy\", \"ecr:SetRepositoryPolicy\", \"ecr:StartLifecyclePolicyPreview\", \"ecr:UploadLayerPart\", \"ecr:BatchCheckLayerAvailability\", \"ecr:BatchDeleteImage\" ]\n  } ]\n}"
+}
