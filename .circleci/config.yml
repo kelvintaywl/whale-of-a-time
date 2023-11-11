@@ -8,7 +8,6 @@ workflows:
   build_and_push_image:
     jobs:
       - aws-ecr/build_and_push_image:
-          account_id: ${AWS_ACCOUNT_ID}
           auth:
             - aws-cli/store_credentials:
                 aws-access-key-id: ${AWS_ACCESS_KEY_ID}
