@@ -16,4 +16,5 @@ workflows:
           push_image: true
           region: 'us-east-2'
           repo: jkg
+          repo_policy_path: ./policy.json
           tag: latest,myECRRepoTag
