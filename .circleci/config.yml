@@ -11,7 +11,7 @@ workflows:
           account_id: ${AWS_ACCOUNT_ID}
           auth:
             - aws-cli/setup:
-                role_arn: arn:aws:iam::483285841698:oidc-provider/oidc.circleci.com/org/39114a72-17c0-4a08-96b6-5d6e8126b7f2
+                role_arn: arn:aws:iam::483285841698:role/jkg
           dockerfile: Dockerfile
           push_image: true
           region: 'us-east-2'
