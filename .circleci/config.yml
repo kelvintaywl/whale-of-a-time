@@ -19,3 +19,4 @@ workflows:
           repo: jkg
           repo_policy_path: ./policy.json
           tag: latest,myECRRepoTag
+          context: aws
