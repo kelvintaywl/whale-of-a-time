@@ -3,10 +3,6 @@ FROM ubuntu:23.04
 ENV FLYWAY_VERSION="9.20.1"
 ENV AWSCLI_VERSION=1.29.29
 
-VOLUME ["/work"]
-
-WORKDIR /work
-
 RUN apt-get update && apt-get install -y postgresql-client \
             wget \
             python3 \
