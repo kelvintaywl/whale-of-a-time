@@ -21,4 +21,4 @@ RUN wget -qO- https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/${F
 
 ADD scripts .
 
-RUN chmod +x ./work/*.sh ./work/*.py
+RUN chmod +x ./work/*
