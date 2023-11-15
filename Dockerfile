@@ -3,9 +3,9 @@ FROM ubuntu:23.04
 ENV FLYWAY_VERSION="9.20.1"
 ENV AWSCLI_VERSION=1.29.29
 
-VOLUME ["/work"]
+VOLUME ["./work"]
 
-WORKDIR /work
+WORKDIR ./work
 
 RUN apt-get update && apt-get install -y postgresql-client \
             wget \
@@ -21,4 +21,4 @@ RUN wget -qO- https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/${F
 
 ADD scripts .
 
-RUN chmod +x /work/*.sh /work/*.py
+RUN chmod +x ./work/*.sh ./work/*.py
