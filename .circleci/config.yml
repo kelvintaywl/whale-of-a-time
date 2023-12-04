@@ -3,20 +3,23 @@ version: 2.1
 orbs:
   aws-ecr: circleci/aws-ecr@9.0.1
   aws-cli: circleci/aws-cli@4.1.1
-
+  docker: circleci/docker@2.4.0
+jobs:
+  build-and-push:
+    executor: docker/docker
+    steps:
+      - setup_remote_docker
+      - checkout
+      - docker/check
+      - docker/build:
+          image: jkzilla/orb-test
+      - docker/push:
+          digest-path: /tmp/digest.txt
+          image: my_repo/orb-test
+      - run:
+          command: |
+            echo "Digest is: $(</tmp/digest.txt)"
 workflows:
-  build_and_push_image:
+  commit:
     jobs:
-      - aws-ecr/build_and_push_image:
-          account_id: ${AWS_ACCOUNT_ID}
-          auth:
-            - aws-cli/setup:
-                role_arn: arn:aws:iam::483285841698:role/jkg
-                role_session_name: "jkg-session"
-          dockerfile: Dockerfile
-          push_image: true
-          region: 'us-east-2'
-          repo: jkg
-          repo_policy_path: ./policy.json
-          tag: latest,myECRRepoTag
-          context: aws
+      - build-and-push
