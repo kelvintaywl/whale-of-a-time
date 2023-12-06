@@ -2,7 +2,6 @@
 version: 2.1
 
 orbs:
-  move-ci: moverdc/move-ci@0.75.0
   customer-ci: moverdc/customer-ci@1.0.0
 
 parameters:
