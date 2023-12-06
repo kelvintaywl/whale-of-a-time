@@ -37,21 +37,12 @@ anchors:
         image: ubuntu-2204:2022.04.2
         docker_layer_caching: true
 
-  branch-filters:
-    - &dev-and-main-branch-filter
-      filters:
-        branches:
-          only: [dev, main]
-    - &main-filter
-      filters:
-        branches:
-          only: [main]
-
 commands:
   build:
     parameters:
       target:
         type: string
+        default: "build"
     steps:
       - checkout
       - run:
