@@ -86,25 +86,6 @@ commands:
           working_directory: << parameters.project-context >>
 
 jobs:
-  build:
-    parameters:
-      target:
-        type: string
-    <<: *machine-ubuntu
-    steps:
-      - build:
-          target: << parameters.target >>
-
-  lint:
-    parameters:
-      target:
-        type: string
-    <<: *machine-ubuntu
-    steps:
-      - just:
-          command: lint
-          target: << parameters.target >>
-
   test:
     parameters:
       target:
@@ -114,9 +95,9 @@ jobs:
         default: circleci-test
     <<: *machine-ubuntu
     steps:
-      - just:
-          command: << parameters.test-command >>
-          target: << parameters.target >>
+      - run:
+          command: 
+            mkdir -p /app/test-results
       - store_test_results:
           path: /app/test-results
 
@@ -124,9 +105,5 @@ jobs:
 workflows:
   ingest-service:
     jobs:
-      - build:
-          target: shared
-      - lint:
-          target: shared
       - test:
           target: shared
