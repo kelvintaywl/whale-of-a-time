@@ -127,9 +127,7 @@ workflows:
   ingest-service:
     when: << pipeline.parameters.ingest-service-modified >>
     jobs:
-      - build
+      - build:
+          target: shared
       - lint
       - test
-      - customer-ci/ecr-build-and-push:
-          dockerfile: Dockerfile
-          repository-name: jkzilla
