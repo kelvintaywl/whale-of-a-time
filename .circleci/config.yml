@@ -1,25 +1,149 @@
+---
 version: 2.1
 
 orbs:
-  aws-ecr: circleci/aws-ecr@9.0.1
-  aws-cli: circleci/aws-cli@4.1.1
-  docker: circleci/docker@2.4.0
-jobs:
-  build-and-push:
-    executor: docker/docker
+  move-ci: moverdc/move-ci@0.75.0
+  customer-ci: moverdc/customer-ci@1.0.0
+
+parameters:
+  deployment-destination:
+    type: string
+    default: ""
+  allocation-service-modified:
+    type: boolean
+    default: false
+  delivery-service-modified:
+    type: boolean
+    default: false
+  ingest-service-modified:
+    type: boolean
+    default: false
+  qualification-service-modified:
+    type: boolean
+    default: false
+  shared-library-modified:
+    type: boolean
+    default: false
+
+
+anchors:
+  env-executions:
+    - &circle-ci-base
+      docker:
+        - image: cimg/base:stable
+      resource_class: small
+    - &circle-ci-python-node
+      docker:
+        - image: cimg/python:3.11.5-node
+      resource_class: small
+    - &machine-ubuntu
+      machine:
+        image: ubuntu-2204:2022.04.2
+        docker_layer_caching: true
+
+  branch-filters:
+    - &dev-and-main-branch-filter
+      filters:
+        branches:
+          only: [dev, main]
+    - &main-filter
+      filters:
+        branches:
+          only: [main]
+
+commands:
+  build:
+    parameters:
+      target:
+        type: string
     steps:
-      - setup_remote_docker
       - checkout
-      - docker/check
-      - docker/build:
-          image: jkzilla/orb-test
-      - docker/push:
-          digest-path: /tmp/digest.txt
-          image: my_repo/orb-test
+      - move-ci/aws-tunnel-up
       - run:
           command: |
-            echo "Digest is: $(</tmp/digest.txt)"
+            docker buildx build \
+            --progress plain \
+            --target << parameters.target >> \
+            --tag << parameters.target >> \
+            .
+
+  just:
+    parameters:
+      command:
+        type: string
+      target:
+        type: string
+    steps:
+      - build:
+          target: << parameters.target >>
+      - run:
+          command: |
+            docker run \
+            << parameters.target >> just << parameters.command >>
+
+  semantic-release-install:
+    parameters:
+      project-context:
+        type: string
+    steps:
+      - run:
+          command: |
+            npm install --loglevel=error \
+              @semantic-release/commit-analyzer@9.0.2 \
+              @semantic-release/changelog@6.0.3 \
+              @semantic-release/exec@6.0.3 \
+              @semantic-release/git@10.0.1 \
+              @semantic-release/github@8.1.0 \
+              @semantic-release/release-notes-generator@10.0.3 \
+              semantic-release@22.0.5 \
+              semantic-release-monorepo@7.0.5
+          working_directory: << parameters.project-context >>
+
+jobs:
+  build:
+    parameters:
+      target:
+        type: string
+    <<: *machine-ubuntu
+    steps:
+      - build:
+          target: << parameters.target >>
+
+  lint:
+    parameters:
+      target:
+        type: string
+    <<: *machine-ubuntu
+    steps:
+      - just:
+          command: lint
+          target: << parameters.target >>
+
+  test:
+    parameters:
+      project-context:
+        type: string
+      target:
+        type: string
+      test-command:
+        type: string
+        default: circleci-test
+    <<: *machine-ubuntu
+    steps:
+      - just:
+          command: << parameters.test-command >>
+          target: << parameters.target >>
+      - store_test_results:
+          path: /app/test-results
+
+
 workflows:
-  commit:
+  ingest-service:
+    when: << pipeline.parameters.ingest-service-modified >>
     jobs:
-      - build-and-push
+      - build
+      - lint
+      - test
+      - customer-ci/ecr-build-and-push:
+          dockerfile: Dockerfile
+          repository-name: jkzilla
