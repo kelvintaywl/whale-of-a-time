@@ -123,7 +123,6 @@ jobs:
 
 workflows:
   ingest-service:
-    when: << pipeline.parameters.ingest-service-modified >>
     jobs:
       - build:
           target: shared
