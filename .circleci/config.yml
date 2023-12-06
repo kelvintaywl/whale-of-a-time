@@ -1,9 +1,6 @@
 ---
 version: 2.1
 
-orbs:
-  customer-ci: moverdc/customer-ci@1.0.0
-
 parameters:
   deployment-destination:
     type: string
@@ -57,7 +54,6 @@ commands:
         type: string
     steps:
       - checkout
-      - move-ci/aws-tunnel-up
       - run:
           command: |
             docker buildx build \
