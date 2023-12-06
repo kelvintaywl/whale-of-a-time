@@ -44,4 +44,6 @@ workflows:
   # and publishes to Docker Hub!
   build_test_publish:
     jobs:
-      - build_custom_image
+      - build_custom_image:
+          context:
+            - docker
