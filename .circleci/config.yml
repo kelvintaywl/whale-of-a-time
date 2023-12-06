@@ -97,7 +97,7 @@ jobs:
     steps:
       - run:
           command: 
-            mkdir -p /app/test-results
+            sudo mkdir -p /app/test-results
       - store_test_results:
           path: /app/test-results
 
