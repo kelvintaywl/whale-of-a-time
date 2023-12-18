@@ -23,4 +23,5 @@ workflows:
             - aws-cli/setup:
                 profile_name: dev
             - run: |
+                aws configure list
                 aws sts get-caller-identity --profile dev
