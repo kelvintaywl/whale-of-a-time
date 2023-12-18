@@ -17,11 +17,9 @@ workflows:
           # The aws-ecr/default executor resolves to ubuntu-2004:2022.04 machine.
           # It comes with AWS CLI pre-installed.
           # However, the ECR login assumes a "default" AWS profile is set.
-          # Hence, I end up importing the aws-cli, to set up a profile for convenience.
-          profile_name: dev
+          # Hence, I end up importing the aws-cli
           auth:
-            - aws-cli/setup:
-                profile_name: dev
+            - aws-cli/setup
             - run: |
                 aws configure list
-                aws sts get-caller-identity --profile dev
+                aws sts get-caller-identity
