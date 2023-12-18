@@ -2,7 +2,7 @@ version: 2.1
 
 orbs: 
   aws-ecr: circleci/aws-ecr@9.0.1
-  aws-cli: circleci/aws-cli@3.1.5
+  # aws-cli: circleci/aws-cli@3.1.5
 
 workflows:
   build_publish_aws_ecr:
@@ -15,11 +15,7 @@ workflows:
           # See https://circleci.com/developer/orbs/orb/circleci/aws-ecr?version=9.0.0#commands-ecr_login
           # Depending on your executor, you may need to install the AWS CLI then.
           # The aws-ecr/default executor resolves to ubuntu-2004:2022.04 machine.
-          # It comes with AWS CLI pre-installed.
-          # However, the ECR login assumes a "default" AWS profile is set.
-          # Hence, I end up importing the aws-cli
           auth:
-            - aws-cli/setup
             - run: |
                 aws configure list
                 aws sts get-caller-identity
